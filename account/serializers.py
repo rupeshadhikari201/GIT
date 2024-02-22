@@ -11,7 +11,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     cnfpassword = serializers.CharField(style={'input_type' : 'password'},write_only=True)
     class Meta:
         model = User
-        fields = ['firstname','lastname','email','password', 'cnfpassword']
+        fields = ['firstname','lastname','email','password', 'cnfpassword',]
         extra_kwargs = {
             'password' : {'write_only': True}
         }

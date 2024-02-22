@@ -16,6 +16,7 @@ class UserManager(BaseUserManager):
             lastname = lastname,
             email=self.normalize_email(email), 
             password = password,
+        
             
         )
 
@@ -32,6 +33,7 @@ class UserManager(BaseUserManager):
             lastname = lastname,
             email = email, 
             password = password,
+       
             
         )
         user.is_admin = True
@@ -40,6 +42,12 @@ class UserManager(BaseUserManager):
 
 # Custom Model
 class User(AbstractBaseUser):
+    
+    ROLES = [
+        ('freelancer', 'Freelancer'),
+        ('client', 'Client'),
+    ]
+    
     firstname = models.CharField(max_length=255)
     lastname = models.CharField(max_length=255)
     email = models.EmailField(
@@ -47,12 +55,16 @@ class User(AbstractBaseUser):
         max_length=255,
         unique=True,
     )
-    # tc = models.BooleanField()
+    
     password = models.CharField(max_length=255)
+    # = models.CharField(max_length=10, choicesS, default='client')
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add =True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Add a foreign key relationship to Project model
+    # projects = models.ManyToManyField('Project', related_name='users', blank=True)
 
     objects = UserManager()
 
@@ -77,3 +89,14 @@ class User(AbstractBaseUser):
         "Is the user a member of staff?"
         # Simplest possible answer: All admins are staff
         return self.is_admin
+    
+
+# # Model for Project
+# class Project(models.Model):
+#     name = models.CharField(max_length=255)
+#     description = models.TextField()
+#     users = models.ManyToManyField(User, related_name='projects', blank=True)
+    
+# # Model for Skills
+# class Skill(models.Model):
+#     name = models.CharField(max_length=255, unique=True)
