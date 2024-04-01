@@ -3,7 +3,7 @@ from datetime import timedelta
 import os
 
 # Import dj-database-url at the beginning of the file.
-# import dj_database_url
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -88,17 +88,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
-
+database_url = os.environ.get('DATABASE_URL')
 # Database
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "postgres1",
-        "USER": "postgres",
-        "HOST": "localhost",
-        "PORT": '5432',
-        "PASSWORD": 12345
-    }
+    # "default": {
+    #     "ENGINE": "django.db.backends.postgresql",
+    #     "NAME": "postgres1",
+    #     "USER": "postgres",
+    #     "HOST": "localhost",
+    #     "PORT": '5432',
+    #     "PASSWORD": 12345
+    # },
+    'default': dj_database_url.config(
+        # Replace this value with your local database's connection string.
+        # default='postgresql://postgres:postgres@localhost:5432/mysite',
+        default=database_url,
+        conn_max_age=600
+    )
 }
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

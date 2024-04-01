@@ -125,7 +125,7 @@ class ProjectStatus(models.Model):
         ('P', 'Paused'),
         ('UN', 'UnAssigned')
     )  
-    project_status = models.CharField(choices=PROJECT_STATUS)
+    project_status = models.CharField(choices=PROJECT_STATUS, max_length=20)
     
     def __str__(self):
         return self.project_status
@@ -136,7 +136,7 @@ class PaymentStatus(models.Model):
         ('UN', 'Unpaid'),
         ('PP', 'Partially Paid')
     )
-    payment_status = models.CharField(choices = PAYMENT_STATUS)
+    payment_status = models.CharField(choices = PAYMENT_STATUS, max_length=20)
     
     def __str__(self):
         return self.payment_status
@@ -145,8 +145,7 @@ class Payment(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_status = models.ForeignKey(PaymentStatus, on_delete=models.SET_NULL, null=True, blank=True)
     project = models.ForeignKey('Projects', on_delete=models.CASCADE, related_name='payments')
-    # payment_date = 
-    # transaction_status =
+
     
     def __str__(self):
         return f"${self.amount} - {self.payment_status}"
@@ -158,7 +157,7 @@ class Projects(models.Model):
         ('Dev', 'Development'),
         
     )
-    project_category = models.CharField(choices=CATEGORIES)
+    project_category = models.CharField(choices=CATEGORIES, max_length=20)
     title = models.CharField(max_length=255, null=False, blank=False)
     description = models.TextField()
     project_price = models.IntegerField()
@@ -170,8 +169,8 @@ class Projects(models.Model):
     project_assigned_status = models.BooleanField(default=False)
 
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='projects_created')
-    # freelancer = models.ForeignKey(Freelancer, on_delete=models.SET_NULL, null=True, blank=True, related_name='projects_allocated')
-    
+
+
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
     
