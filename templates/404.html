@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1752YPLP7H"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag("js", new Date());
+
+        gtag("config", "G-1752YPLP7H");
+    </script>
+
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Autumn | tsParticles 404</title>
+    <link type="text/css" rel="stylesheet" href="styles/404.css" />
+    <title>Autumn 404</title>
+    <link rel="icon" type="image/x-icon" href="../images/tsParticles-64.png" />
+</head>
+<style>
+    #tsparticles {
+        position: fixed !important;
+        opacity: 0.9;
+        height: 100vh;
+    }
+
+    body {
+        margin: 0;
+        font-family: "Work Sans", apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    }
+
+    h3 {
+        text-shadow: white 1px 0 10px;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        opacity: 0.95;
+        background-image: linear-gradient(90deg,
+                rgba(0, 0, 0, 0.7) 0%,
+                rgba(255, 255, 255, 0.2) 100%),
+            url("./assets/autumn.jpg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+
+    .container a {
+        text-decoration: none;
+    }
+
+    .wrapper {
+        max-width: 390px;
+        width: 100%;
+        height: 390px;
+        display: block;
+        margin: 0 auto;
+        position: relative;
+        margin-top: 8vh;
+    }
+
+    .container h1 {
+        color: #000;
+        margin-bottom: 0px;
+        font-weight: 800;
+        font-family: "Arial", display;
+        font-size: 8rem;
+        text-align: center;
+        text-shadow:
+            1px 1px 0px #eb452b,
+            3px 3px 0px #f99913,
+            4px 4px 0px #fff,
+            white 1px 0 10px;
+    }
+
+    .container h3 {
+        text-align: center;
+        color: #fff;
+        text-shadow:
+            1px 1px 0px #eb452b,
+            1.5px 1.5px 0px #f99913;
+        font-size: 20px;
+        line-height: 23px;
+        max-width: 330px;
+        margin: 0px auto 30px auto;
+        font-weight: 400;
+    }
+
+    .container h3 span {
+        position: relative;
+        width: 65px;
+        display: inline-block;
+    }
+
+    .container h3 span:after {
+        content: "";
+        border-bottom: 2px solid #efa032;
+        position: absolute;
+    }
+
+    button {
+        font-family: inherit;
+    }
+
+    .link {
+        background: none;
+        padding: 12px 0px 10px 0px;
+        border: 2px solid #fff;
+        width: 150px;
+        font-size: 15px;
+        text-align: center;
+        margin: 0 auto;
+        display: block;
+        margin-bottom: 40px;
+        margin-top: 25px;
+        font-weight: 700;
+        margin: auto;
+        color: #fff;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        cursor: pointer;
+        overflow: hidden;
+        border-radius: 5px;
+        box-shadow: 0 0 20px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .link:hover {
+        color: #ffa600;
+        border-color: #ffa600;
+        cursor: pointer;
+        opacity: 1;
+        background-color: rgb(220, 37, 0);
+    }
+
+    img {
+        width: 30%;
+        height: 30%;
+        position: absolute;
+        top: -5%;
+        left: 35%;
+        z-index: 1;
+        filter: brightness(120%);
+        filter: contrast(120%);
+        filter: drop-shadow(3px 3px 3px black);
+        transition: opacity 0.5s ease-in-out;
+    }
+
+    img:hover {
+        width: 32%;
+        height: 32%;
+    }
+</style>
+
+<body>
+    <div class="container">
+        <div id="tsparticles"></div>
+
+        <div class="wrapper">
+            <!-- <img src="/templates/assets/pumpkin.png" /> -->
+            <h1>404</h1>
+            <h3>Uh-oh, page not found :(</h3>
+            <a href="#"><button class="link">Go Back</button></a>
+        </div>
+    </div>
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/tsparticles-slim@2/tsparticles.slim.bundle.min.js"></script>
+    <script type="text/javascript" defer="defer" src="scripts/404.js"></script>
+</body>
+<script>
+    tsParticles.load("tsparticles", {
+        fpsLimit: 60,
+        fullScreen: {
+            enable: true,
+        },
+        interactivity: {
+            detectsOn: "window",
+            events: {
+                resize: true,
+                onHover: {
+                    enable: true,
+                    mode: "bubble",
+                },
+            },
+            modes: {
+                bubble: { distance: 100, duration: 2, opacity: 1, size: 40, speed: 3 },
+                grab: { distance: 400, links: { opacity: 1 } },
+                push: { quantity: 4 },
+                remove: { quantity: 2 },
+                repulse: { distance: 200, duration: 0.4 },
+            },
+        },
+        particles: {
+            color: { value: "random" },
+            links: {
+                color: "random",
+                distance: 150,
+                enable: false,
+                opacity: 1,
+                width: 1,
+            },
+            move: {
+                attract: { enable: false, rotateX: 600, rotateY: 1200 },
+                bounce: false,
+                direction: "none",
+                enable: true,
+                out_mode: "out",
+                random: false,
+                speed: 3,
+                straight: false,
+            },
+            rotate: {
+                animation: {
+                    enable: true,
+                    speed: 10,
+                    sync: false,
+                },
+            },
+            number: { density: { enable: true, area: 800 }, value: 100 },
+            opacity: {
+                animation: { enable: true, minimumValue: 1, speed: 1, sync: false },
+                random: false,
+                value: 1,
+            },
+            shape: {
+                character: [
+                    {
+                        fill: true,
+                        font: "Verdana",
+                        value: ["🍂", "🍁"],
+                        style: "",
+                        weight: 400,
+                    },
+                ],
+                image: {
+                    height: 100,
+                    replace_color: true,
+                    src: "images/github.svg",
+                    width: 100,
+                },
+                polygon: { nb_sides: 5 },
+                stroke: { color: "random", width: 1 },
+                type: "char",
+            },
+            size: {
+                anim: { enable: true, minimumValue: 8, speed: 20, sync: false },
+                random: { minimumValue: 8, enable: true },
+                value: 32,
+            },
+        },
+        detectRetina: true,
+    });
+</script>
+
+</html>
