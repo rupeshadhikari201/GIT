@@ -5,6 +5,11 @@ import os
 # Import dj-database-url at the beginning of the file.
 import dj_database_url
 
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,7 +30,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "register",
-    "snippets",
     "rest_framework",
     'rest_framework_simplejwt',
     'corsheaders',
@@ -88,7 +92,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
-database_url = os.environ.get('DATABASE_URL')
+database_url = os.getenv('DATABASE_URL')
+# print("the os environment,",os.environ.items())
+print("the database url is" , database_url)
 # Database
 DATABASES = {
     # "default": {
@@ -101,7 +107,7 @@ DATABASES = {
     # },
     'default': dj_database_url.config(
         # Replace this value with your local database's connection string.
-        # default='postgresql://postgres:postgres@localhost:5432/mysite',
+        # default="postgres://rupesh:G9CkZVNuCB1yOwtNvq78oTFS46Xvtr23@dpg-cn8popgl5elc738utv70-a.oregon-postgres.render.com/users_5b7j",
         default=database_url,
         conn_max_age=600
     )
