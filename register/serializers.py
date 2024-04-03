@@ -101,7 +101,7 @@ class SendPasswordResetEmailSerializer(serializers.ModelSerializer):
             token = PasswordResetTokenGenerator().make_token(user)
             print("Password Reset Token : ", token)
             # 4. generate the reset link
-            link = "http://localhost:8000/api/user/user-password-update/" + uid +"/" + token
+            link = "https://gokap.onrender.com/api/user/user-password-update/" + uid +"/" + token
             print("Password Reset Link : ", link)
             print("The target email is : ", user.email)
             subject = 'Password Reset'
@@ -254,7 +254,7 @@ class SendUserVerificationSerializer(serializers.ModelSerializer):
             token = PasswordResetTokenGenerator().make_token(user)
             print("Password Reset Token : ", token)
             # 4. generate the reset link
-            link = "http://localhost:8000/api/user/validate-email/" + uid +"/" + token
+            link = "https://gokap.onrender.com/api/user/validate-email/" + uid +"/" + token
             print("Password Reset Link : ", link)
             print("The target email is : ", user.email)
             subject = 'Verify Your Email'
