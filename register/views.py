@@ -2,7 +2,7 @@ from django.http import HttpResponse, JsonResponse
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from register.serializers import ChangePasswordSerializer, ClientCreationSerializer, GetUserSerializer, ProjectAssignSerializer, ProjectCreationSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer
+from register.serializers import ChangePasswordSerializer, ClientCreationSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, ProjectAssignSerializer, ProjectCreationSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer
 from django.contrib.auth import authenticate
 from register.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -195,7 +195,44 @@ class ProjectCreationView(APIView):
             return Response({"msg":"Project Created!", "details": serialized.data}, status=status.HTTP_201_CREATED)
         return Response({'msg': "Project can't be created 🙏🏿", "errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
     
+   
+class ProjectUpdateView(APIView):
     
+    renderer_classes = [UserRenderer]
+    
+    # get object
+    def get_object(self, project_id):
+        try:    
+            return Projects.objects.get(pk=project_id)
+        except Projects.DoesNotExist:
+            return None
+        
+    
+    def put(self,request,project_id, *args, **kwargs):
+        
+        # get object
+        project = self.get_object(project_id)
+        if project is None:
+            return Response({"msg": "Project is not found"}, status=status.HTTP_404_NOT_FOUND) 
+        
+        serialized = ProjectCreationSerializer(project, data=request.data)
+        if serialized.is_valid():
+            serialized.save()
+            return Response({"msg":"Project Updated!", "details": serialized.data}, status=status.HTTP_201_CREATED)
+        return Response({'msg': "Project can't be Updated 🙏🏿", "errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    def patch(self, request, project_id, *args, **kwargs):
+        project = self.get_object(project_id)
+        if project is None:
+            return Response({'msg': "Project not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ProjectCreationSerializer(project, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"msg": "Project Updated!", "details": serializer.data}, status=status.HTTP_200_OK)
+        return Response({'msg': "Project can't be Updated 🙏🏿", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
 class SendUserVerificationLinkView(APIView): 
     
     renderer_classes = [UserRenderer] 
@@ -281,8 +318,9 @@ class UpdateUserView(mixins.UpdateModelMixin, generics.GenericAPIView):
         # print("put ", args)
         return self.update(request, pk=1)
     
-
-class GetCreatedProjects(APIView):
+    
+# Get all the projecct of the specific client
+class GetClientProjects(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
     
@@ -292,7 +330,7 @@ class GetCreatedProjects(APIView):
         id = user.id
         # get all the projects created by the user with given id. 
         queryset = Projects.objects.filter(client_id=id)
-        serializer = ProjectCreationSerializer(queryset, many=True)
+        serializer = GetClientProjectsSerializer(queryset, many=True)
 
         return Response(serializer.data)
     
@@ -347,7 +385,54 @@ class ProjectAssignView(APIView):
             return JsonResponse({"errors":  serializer.errors, 'msg':'project doesnt existes.'}, status=400)
             
 
+# API to get the unassigned projects for freelancers
+class GetUnassingedProjects(APIView):
+    
+    renderer_classes = [UserRenderer]
+    
+    def get(self, request):
+        # Fetch all projects that are not assigned
+        unassigned_projects = Projects.objects.filter(project_assigned_status=False)
+        serializer = GetUnassingedProjectSerializer(unassigned_projects, many=True)
+        return Response({'data': serializer.data, 'msg': "Unassigned Projects Retrieved Successfully"}, status=status.HTTP_200_OK)
+
+# Delete Project
+class DeleteUnassignedProject(APIView):
+    
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    
+    def delete(self, request, **kwargs):
         
+        project_id = kwargs['project_id']
+        
+        # check if the project with the id exists
+        if Projects.objects.filter(id=project_id):
+        
+            project = Projects.objects.get(id = project_id)
+            if project.project_assigned_status == False:
+                delete_status = project.delete()
+                print("delete_status", delete_status)
+                return Response({"msg": "Project deleted sucessfully"}, status=status.HTTP_200_OK )
+        
+            return Response({"msg": "Project is Assigned"}, status=status.HTTP_400_BAD_REQUEST )  
+        else:
+            return Response({"msg": "Project Does Not Exists"}, status=status.HTTP_400_BAD_REQUEST )  
+               
+   
+# Logout View  
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"msg": "Successfully logged out"}, status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         
         
             

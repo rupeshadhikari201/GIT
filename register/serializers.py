@@ -336,5 +336,20 @@ class ProjectAssignSerializer(serializers.ModelSerializer):
         except:
             attrs['assigned'] = False
             return attrs
+      
+class GetClientProjectsSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Projects
+        fields = "__all__" 
+         
+class GetUnassingedProjectSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Projects
+        fields= '__all__'
+    
+        
+
 
     

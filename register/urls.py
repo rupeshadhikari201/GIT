@@ -1,8 +1,9 @@
 from django.urls import path
-from register.views import GetCreatedProjects, ProjectAssignView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView
+from register.views import DeleteUnassignedProject, GetClientProjects, ProjectAssignView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, LogoutView
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.urlpatterns import format_suffix_patterns
 from register import views
+from register import authenticationview
 
 
 urlpatterns = [
@@ -16,9 +17,13 @@ urlpatterns = [
      path('freelancer/', FreelancerCreationView.as_view(), name='freelancer'),
      path('client/', ClientCreationView.as_view(), name='client'),
      path('create_project/', ProjectCreationView.as_view(), name='create_project'),
+     path('update_project/<int:project_id>', ProjectUpdateView.as_view(), name='update_project'),
+     path('delete_project/<int:project_id>', DeleteUnassignedProject.as_view(), name='delete_project'),
+     path('get_unassigned_project/', GetUnassingedProjects.as_view(), name='get_unassigned_project'),
      
      path('verify-user/', SendUserVerificationLinkView.as_view(), name="verify-user"),
      path('validate-email/<int>/<token>/', VerifyUserEmailView.as_view(), name="verify-email"),
+     path('logout/', LogoutView.as_view(), name='logout'),
      
      path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
      
@@ -28,9 +33,14 @@ urlpatterns = [
      path('delete-user/<int:pk>/', views.GetUserView.as_view(), name='delete_user'),
      # path('get-user/', views.GetUserView, name='get_user'),
      
-     path('get-client-project/', GetCreatedProjects.as_view(), name='get-client-project'),
+     path('get-client-project/', GetClientProjects.as_view(), name='get-client-project'),
      
-     path('assign-projects/', ProjectAssignView.as_view(), name='assign-projects')
+     path('assign-projects/', ProjectAssignView.as_view(), name='assign-projects'),
+     
+     
+     
+     # for authentication
+     path('user-authentication/', authenticationview.UserAutheniticationExampleView.as_view(), name='user-authentication')
 ] 
 
 urlpatterns = format_suffix_patterns(urlpatterns)

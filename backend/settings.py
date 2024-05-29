@@ -13,6 +13,10 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+BASE_URL = 'http://localhost:8000' if os.getenv('PRODUCTION') == 'False' else 'https://gokap.onrender.com'
+
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-%5q47umd@xh^prb1sx8mciadquxqg64-76d1&+z=8#w$shw#h4"
 
@@ -32,6 +36,7 @@ INSTALLED_APPS = [
     "register",
     "rest_framework",
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
 ]
 # say django to use account.user as the default user
