@@ -118,21 +118,23 @@ DATABASES = {
     )
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS")
+EMAIL_PORT = os.getenv("EMAIL_PORT")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+
 # EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST = 'smtp.hostinger.com '
-EMAIL_USE_TLS = True
 # EMAIL_PORT = 587
-EMAIL_PORT = 465
 # EMAIL_HOST_USER = '21bcs11201@gmail.com'
-EMAIL_HOST_USER = 'gokap@gokapinnotech.com'
 # EMAIL_HOST_PASSWORD = 'uoba zdxf aucb uxih'
-EMAIL_HOST_PASSWORD = 'Gokap@2024'
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},

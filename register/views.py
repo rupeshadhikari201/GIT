@@ -12,6 +12,7 @@ from django.shortcuts import redirect, render
 from django.utils.encoding import smart_str
 from django.utils.http import urlsafe_base64_decode
 from register.models import User, Projects
+import os
 
 # function to generate jwt access and refresh token
 def get_tokens_for_user(user):
@@ -92,7 +93,7 @@ class ChangePasswordView(APIView):
         user = request.user
         serializer = ChangePasswordSerializer(data=request.data, context={'user':user})
         if serializer.is_valid(raise_exception=True):
-            return Response({'msg ': "Password Changed!!! WOW 🙏🙏"}, status=status.HTTP_200_OK)
+            return Response({'msg': "Password Changed"}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status.HTTP_401_UNAUTHORIZED)
     
 class SendPasswordResetEmailView(APIView):
@@ -100,7 +101,7 @@ class SendPasswordResetEmailView(APIView):
     def post(self, request, format=None):
         serializer = SendPasswordResetEmailSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            return Response({"msg " : "Password Reset Link was sent to your provided Email. Please Check your Email. 😊"}, status.HTTP_200_OK)
+            return Response({"msg" : "Password Reset Link was sent to your provided Email. Please Check your Email. 😊"}, status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class UserPasswordUpdateView(APIView):
@@ -119,7 +120,8 @@ class UserPasswordUpdateView(APIView):
         
         context = {
             'id' : uid, 
-            'token' : token
+            'token' : token, 
+            'url' : 'http://localhost:8000' if os.getenv('PR') == 'False' else 'https://gokap.onrender.com'
         }
         
         return render(request= request,template_name='reset_password.html', context=context)
@@ -193,12 +195,13 @@ class ProjectCreationView(APIView):
         if serialized.is_valid():
             serialized.save()
             return Response({"msg":"Project Created!", "details": serialized.data}, status=status.HTTP_201_CREATED)
-        return Response({'msg': "Project can't be created 🙏🏿", "errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'msg': "Project can't be created", "errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
     
    
 class ProjectUpdateView(APIView):
     
     renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
     
     # get object
     def get_object(self, project_id):
@@ -304,7 +307,7 @@ class GetUserView(mixins.ListModelMixin,
         response =  super().destroy(request, *args, **kwargs)
         print("the response is : ", response)
         response.data['msg'] = "User Deletion Sucessfull"
-        return response;
+        return Response({"msg":"User deleted success"},status=status.HTTP_200_OK)
     
 class UpdateUserView(mixins.UpdateModelMixin, generics.GenericAPIView):
 

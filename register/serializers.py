@@ -10,6 +10,7 @@ from register.utils import Util
 from django.core.mail import send_mail
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404
+import os
 
 
 
@@ -75,7 +76,7 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
         cnfpassword = attrs.get('cnfpassword')
         user = self.context.get('user')
         if password != cnfpassword:
-            raise serializers.ValidationError("Password and Confirm  Passwors is not Equal.😡😡")
+            raise serializers.ValidationError("Password and Confirm  Password is not Equal")
         user.set_password(password)
         user.save()
         return attrs
@@ -101,12 +102,14 @@ class SendPasswordResetEmailSerializer(serializers.ModelSerializer):
             token = PasswordResetTokenGenerator().make_token(user)
             print("Password Reset Token : ", token)
             # 4. generate the reset link
-            link = "https://gokap.onrender.com/api/user/user-password-update/" + uid +"/" + token
+            baseUrl = 'http://localhost:8000' if os.getenv('PR') == 'False' else 'https://gokap.onrender.com'
+            print(os.getenv('PR'))
+            link = baseUrl + "/api/user/user-password-update/" + uid +"/" + token
             print("Password Reset Link : ", link)
             print("The target email is : ", user.email)
             subject = 'Password Reset'
             body  = f'Dear, {user.firstname} please reset the email using following link. {link}'
-            send_from = "21bcs11201@gmail.com"
+            send_from = "gokap@gokapinnotech.com"
             send_to = [user.email]
             send_mail(subject,body,send_from,send_to)
             return attrs
@@ -254,7 +257,8 @@ class SendUserVerificationSerializer(serializers.ModelSerializer):
             token = PasswordResetTokenGenerator().make_token(user)
             print("Password Reset Token : ", token)
             # 4. generate the reset link
-            link = "https://gokap.onrender.com/api/user/validate-email/" + uid +"/" + token
+            baseUrl = 'http://localhost:8000' if os.getenv('PR') == 'False' else 'https://gokap.onrender.com'
+            link =  baseUrl+"/api/user/validate-email/" + uid +"/" + token
             print("Password Reset Link : ", link)
             print("The target email is : ", user.email)
             subject = 'Verify Your Email'
