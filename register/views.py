@@ -2,17 +2,23 @@ from django.http import HttpResponse, JsonResponse
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from register.serializers import ChangePasswordSerializer, ClientCreationSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, ProjectAssignSerializer, ProjectCreationSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer
+from register.serializers import ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, ProjectAssignSerializer, ProjectCreationSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer
 from django.contrib.auth import authenticate
 from register.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import IsAuthenticated
 from register.models import  Client, Freelancer, ProjectsAssigned
 from django.shortcuts import redirect, render
 from django.utils.encoding import smart_str
 from django.utils.http import urlsafe_base64_decode
 from register.models import User, Projects
+import logging
 import os
+
+
+logger = logging.getLogger(__name__)
+
 
 # function to generate jwt access and refresh token
 def get_tokens_for_user(user):
@@ -62,7 +68,7 @@ class UserLoginView(APIView):
                     # created_at = user.created_at  # Fetch created_at from user object
                     return Response({'token': token, 'msg': "User Login Sucessfull😎", 'user_type': user_type}, status.HTTP_202_ACCEPTED)
                 else:
-                    return Response({'msg' : "User not verified. "}, status=status.HTTP_401_UNAUTHORIZED)
+                    return Response({'msg' : "User not verified"}, status=status.HTTP_401_UNAUTHORIZED)
             else:
                 return Response({'errors' : {'non_field_errors' : ['Email or Password not Valid']}}, status.HTTP_404_NOT_FOUND)
         else:
@@ -73,17 +79,19 @@ class UserLoginView(APIView):
 class UserProfileView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
+    
     def get(self, request, format=None):
         user = request.user
+
         serializer = UserProfileSerializer(request.user)
-        response_data = {
-            'msg': f'The profile details of the user with user id {user.id} is : ',
-            # 'id': user.id,
-            # 'email': user.email,
-            # 'name': f'{user.firstname} {user.lastname}',
-            'data': serializer.data,
-        }
-        return Response(response_data,status=status.HTTP_200_OK)
+        # response_data = {
+        #     # 'msg': f'The profile details of the user with user id {user.id} is : ',
+        #     # 'id': user.id,
+        #     # 'email': user.email,
+        #     # 'name': f'{user.firstname} {user.lastname}',
+        #     'data': serializer.data,
+        # }
+        return Response({"msg": serializer.data},status=status.HTTP_200_OK)
                 
 class ChangePasswordView(APIView):
     renderer_classes = [UserRenderer]
@@ -189,9 +197,13 @@ class ClientCreationView(APIView):
 class ProjectCreationView(APIView):
     
     renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
     
     def post(self,request,*args, **kwargs):
-        serialized = ProjectCreationSerializer(data=request.data)
+        data = request.data
+        data['client'] = request.user.id
+        print(data)
+        serialized = ProjectCreationSerializer(data=data)
         if serialized.is_valid():
             serialized.save()
             return Response({"msg":"Project Created!", "details": serialized.data}, status=status.HTTP_201_CREATED)
@@ -243,8 +255,9 @@ class SendUserVerificationLinkView(APIView):
         serialized = SendUserVerificationSerializer(data=request.data)
         if serialized.is_valid():
             return Response({"msg" : "Email Verification Link have been sent"}, status=status.HTTP_200_OK)
-        return Response({'msg': "Error 🙏🏿", "errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'msg': "Error", "errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
     
+# Verify UserEmail
 class VerifyUserEmailView(APIView):
     
     renderer_classes = [UserRenderer]
@@ -427,19 +440,29 @@ class DeleteUnassignedProject(APIView):
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request):
+    def post(self, request, format=None):
         try:
             refresh_token = request.data["refresh"]
             token = RefreshToken(refresh_token)
             token.blacklist()
-            return Response({"msg": "Successfully logged out"}, status=status.HTTP_205_RESET_CONTENT)
+            return Response({"msg": "Logout successful."}, status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({"msg": request, "refresh": request.data['refresh'], "error": str(e),}, status=status.HTTP_400_BAD_REQUEST)
         
         
+# Apply Projects
+class ApplyProjectView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        print("id", request.user.id)
+        data = request.data
+        data['frelancer_id'] = request.user.id
+        serializer = ApplyProjectSerializer(data= data)
+        
+        if serializer.is_valid():
+            serializer.save()
             
-
-
-    
-    
+            return Response({"msg": "Project Applied Sucess"}, status=status.HTTP_200_OK)
+        return Response({"errors": serializer.errors}, status=status.HTTP_404_NOT_FOUND)

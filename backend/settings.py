@@ -75,7 +75,7 @@ REST_FRAMEWORK = {
 
 }
 
-print("the base dir is " , os.path.join(BASE_DIR, 'templates'))
+# print("the base dir is " , os.path.join(BASE_DIR, 'templates'))
 
 ROOT_URLCONF = "backend.urls"
 
@@ -99,7 +99,7 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 database_url = os.getenv('DATABASE_URL')
 # print("the os environment,",os.environ.items())
-print("the database url is" , database_url)
+# print("the database url is" , database_url)
 # Database
 DATABASES = {
     # "default": {

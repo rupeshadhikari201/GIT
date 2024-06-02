@@ -184,3 +184,19 @@ class ProjectsAssigned(models.Model):
     assigned_at = models.DateTimeField(auto_now_add=True)
     revoke = models.BooleanField(default=False)
     
+    
+    
+# Apply Projects
+
+class ApplyProject(models.Model):
+    
+    frelancer_id = models.ForeignKey(Freelancer, on_delete=models.CASCADE)
+    project_id = models.ForeignKey(Projects, on_delete=models.CASCADE)
+    applied_at = models.DateTimeField(auto_now_add=True)
+    proposal = models.TextField(blank=False)
+    
+    
+    
+
+    
+    

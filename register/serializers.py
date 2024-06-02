@@ -5,7 +5,7 @@ from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeErr
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework import serializers
-from register.models import Client, Projects, User, Freelancer, ProjectsAssigned
+from register.models import ApplyProject, Client, Projects, User, Freelancer, ProjectsAssigned
 from register.utils import Util
 from django.core.mail import send_mail
 from django.conf import settings
@@ -60,8 +60,10 @@ class UserLoginSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['firstname','lastname','email',"user_type"]
-        # fields = '_all_'
+        # fields = ['firstname','lastname','email',"user_type"]
+        # fields = '__all__'
+        exclude = ['password']
+        
         
 class ChangePasswordSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=255, style={'input_type':'password'}, write_only=True)
@@ -254,7 +256,7 @@ class SendUserVerificationSerializer(serializers.ModelSerializer):
             uid = urlsafe_base64_encode(force_bytes(user.id)) 
             print("Encoded Uid is: ", uid)
             # 3. generate the token for that user
-            token = PasswordResetTokenGenerator().make_token(user)
+            token = PasswordResetTokenGenerator().make_token(user) 
             print("Password Reset Token : ", token)
             # 4. generate the reset link
             baseUrl = 'http://localhost:8000' if os.getenv('PR') == 'False' else 'https://gokap.onrender.com'
@@ -263,7 +265,7 @@ class SendUserVerificationSerializer(serializers.ModelSerializer):
             print("The target email is : ", user.email)
             subject = 'Verify Your Email'
             body  = f'Dear, {user.firstname} please verify the email using following link. {link}'
-            send_from = "21bcs11201@gmail.com"
+            send_from = "gokap@gokapinnotech.com"
             send_to = [user.email]
             send_mail(subject,body,send_from,send_to)
             return attrs
@@ -353,7 +355,12 @@ class GetUnassingedProjectSerializer(serializers.ModelSerializer):
         model = Projects
         fields= '__all__'
     
-        
+
+class ApplyProjectSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = ApplyProject
+        fields = '__all__'
 
 
     

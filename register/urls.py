@@ -1,5 +1,7 @@
 from django.urls import path
-from register.views import DeleteUnassignedProject, GetClientProjects, ProjectAssignView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, LogoutView
+from register.views import DeleteUnassignedProject, GetClientProjects, LogoutView, ProjectAssignView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView
+# from register.views import logout_view
+
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.urlpatterns import format_suffix_patterns
 from register import views
@@ -24,6 +26,7 @@ urlpatterns = [
      path('verify-user/', SendUserVerificationLinkView.as_view(), name="verify-user"),
      path('validate-email/<int>/<token>/', VerifyUserEmailView.as_view(), name="verify-email"),
      path('logout/', LogoutView.as_view(), name='logout'),
+     # path('custom_logout/', logout_view, name='costom_logout'),
      
      path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
      
@@ -34,7 +37,7 @@ urlpatterns = [
      # path('get-user/', views.GetUserView, name='get_user'),
      
      path('get-client-project/', GetClientProjects.as_view(), name='get-client-project'),
-     
+     path('apply_project/', ApplyProjectView.as_view(), name='apply_project'),
      path('assign-projects/', ProjectAssignView.as_view(), name='assign-projects'),
      
      
