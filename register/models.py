@@ -115,7 +115,8 @@ class Client(models.Model):
     class Meta:
         swappable : "User"
     def __str__(self):
-        return self.user.username
+        # return self.user.username
+        return self.user.email
 
 class ProjectStatus(models.Model):
       

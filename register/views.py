@@ -32,12 +32,18 @@ def get_tokens_for_user(user):
 # Create your views here.
 class UserRegistrationView(APIView):
     renderer_classes = [UserRenderer]
+    
     def post(self, request, format=None):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
            user = serializer.save()
            token = get_tokens_for_user(user)
-           return Response({"token":token, 'msg': "User Registration Sucessfull🫡"}, status=status.HTTP_201_CREATED) 
+           user_id = user.id
+           if(user.user_type == "client"):
+                client_instance, created = Client.objects.get_or_create(user=user)
+                print("client_instance", client_instance)
+                print("instance", created)
+           return Response({"token":token, 'msg': "User Registration Sucessfull", "user_id": user_id }, status=status.HTTP_201_CREATED) 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -46,8 +52,8 @@ class UserLoginView(APIView):
 
     def post(self,request,format=None):
         
-        # print('the reques is ', request)
-        # print('the reques data is ', request.data)
+        print('the request is ', request)
+        print('the request data is ', request.data)
         serializer = UserLoginSerializer(data=request.data)
         # IF USER IS VERIFIED 
         if serializer.is_valid(raise_exception=True):
@@ -65,8 +71,9 @@ class UserLoginView(APIView):
                 if serializer.data.get('is_verified'):
                     token = get_tokens_for_user(user)
                     user_type = user.user_type  # Fetch user_type from user object
+                    user_id = user.id 
                     # created_at = user.created_at  # Fetch created_at from user object
-                    return Response({'token': token, 'msg': "User Login Sucessfull😎", 'user_type': user_type}, status.HTTP_202_ACCEPTED)
+                    return Response({'token': token, 'msg': "User Login Sucessfull😎", 'user_type': user_type,"user_id" : user_id}, status.HTTP_202_ACCEPTED)
                 else:
                     return Response({'msg' : "User not verified"}, status=status.HTTP_401_UNAUTHORIZED)
             else:

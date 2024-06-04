@@ -18,7 +18,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     cnfpassword = serializers.CharField(style={'input_type' : 'password'},write_only=True)
     class Meta:
         model = User
-        fields = ['firstname','lastname','email','password', 'cnfpassword',"user_type"]
+        fields = ['firstname','lastname','email','password', 'cnfpassword',"user_type", "id"]
         extra_kwargs = {
             'password' : {'write_only': True}
         }
@@ -40,7 +40,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['email','password', 'is_verified',]
+        fields = ['email','password', 'is_verified','id']
         
     def validate(self, attrs):
         print("the attrs from validate is :", attrs['email'])
@@ -51,6 +51,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
             user2 = User.objects.filter(email=email)
             print("the user is : ", user)
             attrs['is_verified'] = user.is_verified
+            attrs['id'] = user.id
             return attrs
         
         except User.DoesNotExist:
