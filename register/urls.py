@@ -1,11 +1,16 @@
-from django.urls import path
-from register.views import DeleteUnassignedProject, GetClientProjects, LogoutView, ProjectAssignView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView
+from django.urls import path, include
+from register.views import DeleteUnassignedProject, GetClientProjects, LogoutView, PaymentStatusView, ProjectAssignView, ProjectFileView, ProjectStatusView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView
 # from register.views import logout_view
 
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.urlpatterns import format_suffix_patterns
 from register import views
 from register import authenticationview
+
+# from rest_framework.routers import DefaultRouter
+# from .views import ProjectStatusView
+# router = DefaultRouter()
+# router.register(r'project_status', ProjectStatusView)
 
 
 urlpatterns = [
@@ -39,11 +44,16 @@ urlpatterns = [
      path('get-client-project/', GetClientProjects.as_view(), name='get-client-project'),
      path('apply_project/', ApplyProjectView.as_view(), name='apply_project'),
      path('assign-projects/', ProjectAssignView.as_view(), name='assign-projects'),
-     
+     path('project/<int:project_id>/files/', ProjectFileView.as_view(), name='project_files'),
      
      
      # for authentication
-     path('user-authentication/', authenticationview.UserAutheniticationExampleView.as_view(), name='user-authentication')
+     path('user-authentication/', authenticationview.UserAutheniticationExampleView.as_view(), name='user-authentication'),
+     
+     # include
+     path('project_status/', ProjectStatusView.as_view(), name='project_status'),
+     path('payment_status/', PaymentStatusView.as_view(), name='project_status'),
+     # path('', include(router.urls)),
 ] 
 
 urlpatterns = format_suffix_patterns(urlpatterns)

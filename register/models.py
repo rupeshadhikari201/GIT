@@ -152,6 +152,15 @@ class Payment(models.Model):
         return f"${self.amount} - {self.payment_status}"
     
 class Projects(models.Model):
+    
+    # get the defualt payment status
+    def get_default_payment_status():
+        return PaymentStatus.objects.get(payment_status='UN').pk
+    
+    # get the defualt project status
+    def get_default_project_status():
+        return ProjectStatus.objects.get(project_status='UN').pk
+
     CATEGORIES = (
         ('R',  'Research'),
         ('D', 'Design'),
@@ -164,8 +173,8 @@ class Projects(models.Model):
     project_price = models.IntegerField()
     project_deadline = models.DateTimeField()
     skills_required = ArrayField(models.CharField(max_length=100), default=list)
-    payment_status = models.ForeignKey(PaymentStatus, on_delete=models.CASCADE, default=1)
-    project_status = models.ForeignKey(ProjectStatus, on_delete=models.CASCADE, default=1)
+    payment_status = models.ForeignKey(PaymentStatus, on_delete=models.CASCADE, default=get_default_payment_status)
+    project_status = models.ForeignKey(ProjectStatus, on_delete=models.CASCADE, default=get_default_project_status)
     
     project_assigned_status = models.BooleanField(default=False)
 
@@ -188,7 +197,6 @@ class ProjectsAssigned(models.Model):
     
     
 # Apply Projects
-
 class ApplyProject(models.Model):
     
     frelancer_id = models.ForeignKey(Freelancer, on_delete=models.CASCADE)
@@ -197,7 +205,14 @@ class ApplyProject(models.Model):
     proposal = models.TextField(blank=False)
     
     
-    
+# Model to store project screenshot
+class ProjectFile(models.Model):
+    project = models.ForeignKey(Projects, on_delete=models.CASCADE)
+    file = models.FileField(upload_to='project_files/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.file.name
 
     
     

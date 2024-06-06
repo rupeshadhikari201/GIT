@@ -5,7 +5,7 @@ from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeErr
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework import serializers
-from register.models import ApplyProject, Client, Projects, User, Freelancer, ProjectsAssigned
+from register.models import ApplyProject, Client, PaymentStatus, ProjectFile, ProjectStatus, Projects, User, Freelancer, ProjectsAssigned
 from register.utils import Util
 from django.core.mail import send_mail
 from django.conf import settings
@@ -160,21 +160,44 @@ class FreelancerCreationSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Freelancer
-        # fields = '__al__'
         fields = ['user', 'profession', 'skills','languages', 'reason_to_join','where_did_you_heard', 'resume','bio']
+    
+    '''
+    The "to_internal_value" method is part of Django REST framework's serializer validation process. It is responsible for converting the incoming primitive data types (typically JSON) into native Python data types and validating them. This method is usually overridden to perform custom deserialization and validation.
+    '''
     def to_internal_value(self, data):
         if 'skills' in data and isinstance(data['skills'], str):
             data['skills'] = data['skills'].strip('][').split(', ')
+            
         if 'languages' in data and isinstance(data['languages'], str):
             data['languages'] = data['languages'].strip('][').split(', ')
+        
+        # After converting the skills and languages fields to lists, the method calls super().to_internal_value(data) to leverage the default behavior provided by ModelSerializer. 
         return super().to_internal_value(data)
-    # def validate(self, attrs):
-    #     skils = attrs.get('skills')
-    #     print("the skill type is : ", skils)
-    #     skills_list = ast.literal_eval(skils)
-    #     print("the list of skills is: ", skills_list)
-    #     attrs['skills'] = skills_list
-    #     return attrs
+    
+    '''
+    The validate method in a Django REST framework serializer is used to provide custom validation logic. The commented-out validate method you provided attempts to process the skills attribute, but it has some issues.
+    '''
+    def validate(self, attrs):
+        # retrive the skills attribute from the attrs dictionary, which contains all the validated data
+        skills = attrs.get('skills')
+        
+        # check if the skills is an instance of string
+        if isinstance(skills, str):
+            
+            # The ast.literal_eval function safely evaluates a string containing a Python literal or container display (like a list, dictionary, or string) and converts it into an actual Python object. This line assumes that skils is a string representation of a list and attempts to convert it into a Python list.
+            try:
+                skills_list = ast.literal_eval(skills)
+                
+                if not isinstance(skills_list, list):
+                    raise ValueError
+            
+            except (ValueError,SyntaxError):
+                raise serializers.ValidationError({'skills': 'Invalid format for skills. Must be a list or a string representation of a list.'})
+            
+            attrs['skills'] = skills_list
+            
+        return attrs
 
 class ClientCreationSerializer(serializers.ModelSerializer):
 
@@ -239,14 +262,18 @@ class ProjectCreationSerializer(serializers.ModelSerializer):
         fields = ['project_category', 'title','description', 'project_price', 'project_deadline','skills_required','client']
         
 class SendUserVerificationSerializer(serializers.ModelSerializer):
-      
+    
+    # serialize the email Field
     email = serializers.EmailField(max_length=255)
 
     class Meta:
         model = User
         fields = ['email']
     
+    
     def validate(self, attrs):
+        print("the type of attrs is     : ", type(attrs))
+        print("the attrs of validate is : ", attrs)
         # Check if the user with the provided email exists in our database or 
         email = attrs.get('email')
         if User.objects.filter(email=email).exists():
@@ -261,9 +288,10 @@ class SendUserVerificationSerializer(serializers.ModelSerializer):
             print("Password Reset Token : ", token)
             # 4. generate the reset link
             baseUrl = 'http://localhost:8000' if os.getenv('PR') == 'False' else 'https://gokap.onrender.com'
-            link =  baseUrl+"/api/user/validate-email/" + uid +"/" + token
+            link =  baseUrl + "/api/user/validate-email/" + uid +"/" + token
             print("Password Reset Link : ", link)
             print("The target email is : ", user.email)
+              
             subject = 'Verify Your Email'
             body  = f'Dear, {user.firstname} please verify the email using following link. {link}'
             send_from = "gokap@gokapinnotech.com"
@@ -363,5 +391,29 @@ class ApplyProjectSerializer(serializers.ModelSerializer):
         model = ApplyProject
         fields = '__all__'
 
+
+# Project Status Serializer
+class ProjectStatusSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = ProjectStatus
+        fields= '__all__'
+        
+# Payment Status Serializer
+class PaymentStatusSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = PaymentStatus
+        fields= '__all__'
+        
+# Project Profile File Serializer
+
+class ProjectFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectFile
+        fields = '__all__'
+
+        
+    
 
     

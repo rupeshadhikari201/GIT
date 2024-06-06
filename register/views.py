@@ -1,14 +1,17 @@
 from django.http import HttpResponse, JsonResponse
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import generics
+from rest_framework import viewsets
 from rest_framework.views import APIView
-from register.serializers import ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, ProjectAssignSerializer, ProjectCreationSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer
+from rest_framework.generics import  ListCreateAPIView
+from register.serializers import ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, PaymentStatusSerializer, ProjectAssignSerializer, ProjectCreationSerializer, ProjectFileSerializer, ProjectStatusSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer
 from django.contrib.auth import authenticate
 from register.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import IsAuthenticated
-from register.models import  Client, Freelancer, ProjectsAssigned
+from register.models import  Client, Freelancer, PaymentStatus, ProjectFile, ProjectStatus, ProjectsAssigned
 from django.shortcuts import redirect, render
 from django.utils.encoding import smart_str
 from django.utils.http import urlsafe_base64_decode
@@ -152,28 +155,46 @@ class UserPasswordUpdateView(APIView):
 # It is a class-based view that allows you to define the behavior and logic for handling different HTTP methods (GET, POST, PUT, PATCH, DELETE, etc.) in your API.
 class FreelancerCreationView(APIView):
     renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
     
     def post(self, request, format=None):
-        # print("this is request to crete freelncer " , request)
-        # print("this is the data for the request ", request.data)
-        # This line creates an instance of the FreelancerSerializer class. It takes the request.data as the data to be serialized.
-        serialized = FreelancerCreationSerializer(data=request.data)
-        print("this is the serialized data ", serialized)
+        
+        # Print the user that comes with the request as token
+        print("user", request.user)
+        print("user", request.user.id)
+        # Print the data that comes with the request from the form 
+        print("data", request.data)
+        
+        # Along with the request comes the user(there is permission_classes) and the data 
+        '''
+        The issue you're facing is likely due to the fact that request.data is an immutable QueryDict object when dealing with form data. To modify it, you need to convert it to a mutable dictionary first.
+        '''
+        data = request.data.copy()
+        user = request.user.id
+        data['user'] = user
+        print("the final data is : ", data)
+        
+        # This line creates an instance of the FreelancerSerializer class. 
+        # It takes the request.data as the data to be serialized.
+        serialized = FreelancerCreationSerializer(data=data)
         
         # This line checks whether the data provided to the serializer is valid according to the serializer's validation rules. The is_valid() method is a DRF method that triggers the validation process.
         if serialized.is_valid():
             # If the data is valid, this line saves the data to the database.
             serialized.save()
-            return Response({"msg": "Freelancer Created 😎", "result": serialized.data}, status=status.HTTP_201_CREATED)
-        return Response({"msg": "Freelancer isn't created","erros" : serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"msg": "Freelancer Created", "serialized_data": serialized.data}, status=status.HTTP_201_CREATED)
+        return Response({"msg": "Freelancer isn't created","serialized_errors" : serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
     
-    def get(self, request, *args, **kwargs):
+    # get all the frelancers
+    def get(self, request):
+        
+        # Get the queryset 
         freelancers = Freelancer.objects.all()
-        print("the object of freelancer are : ", freelancers)
-        # The many parameter is a boolean flag used to indicate whether the serializer should be used to serialize a single instance (many=False) or multiple instances (many=True
+        
+        # The many parameter is a boolean flag used to indicate whether the serializer should be used to serialize a single instance (many=False) or multiple instances (many=True)
         serialized = FreelancerCreationSerializer(freelancers, many=True)
         
-        return Response({'data': serialized.data})
+        return Response({'serialized_data': serialized.data})
         
     
 class ClientCreationView(APIView):
@@ -258,6 +279,7 @@ class ProjectUpdateView(APIView):
 class SendUserVerificationLinkView(APIView): 
     
     renderer_classes = [UserRenderer] 
+    
     def post(self, request):
         serialized = SendUserVerificationSerializer(data=request.data)
         if serialized.is_valid():
@@ -473,3 +495,36 @@ class ApplyProjectView(APIView):
             
             return Response({"msg": "Project Applied Sucess"}, status=status.HTTP_200_OK)
         return Response({"errors": serializer.errors}, status=status.HTTP_404_NOT_FOUND)
+    
+    
+    
+# API's to populate ProjectStatus
+class ProjectStatusView(generics.ListCreateAPIView):
+    
+    queryset = ProjectStatus.objects.all()
+    serializer_class = ProjectStatusSerializer
+    
+# API's to populate ProjectStatus
+class PaymentStatusView(generics.ListCreateAPIView):
+    
+    queryset = PaymentStatus.objects.all()
+    serializer_class = PaymentStatusSerializer
+    
+    
+# API Database for holding project screenshots, doc and pdf files
+class ProjectFileView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id):
+        project_files = ProjectFile.objects.filter(project_id=project_id)
+        serializer = ProjectFileSerializer(project_files, many=True)
+        return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+
+    def post(self, request, project_id):
+        data = request.data
+        data['project'] = project_id
+        serializer = ProjectFileSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'msg': 'File uploaded successfully'}, status=status.HTTP_201_CREATED)
+        return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
