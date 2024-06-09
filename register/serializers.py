@@ -5,7 +5,7 @@ from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeErr
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework import serializers
-from register.models import ApplyProject, Client, PaymentStatus, ProjectFile, ProjectStatus, Projects, User, Freelancer, ProjectsAssigned
+from register.models import ApplyProject, Client, Notification, PaymentStatus, ProjectFile, ProjectStatus, Projects, User, Freelancer, ProjectsAssigned
 from register.utils import Util
 from django.core.mail import send_mail
 from django.conf import settings
@@ -412,6 +412,14 @@ class ProjectFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProjectFile
         fields = '__all__'
+        
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'user', 'message', 'read', 'timestamp']
+        read_only_fields = ['id', 'timestamp']  
+        
+   
 
         
     
