@@ -5,7 +5,7 @@ from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeErr
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework import serializers
-from register.models import ApplyProject, Client, Notification, PaymentStatus, ProjectFile, ProjectStatus, Projects, User, Freelancer, ProjectsAssigned
+from register.models import ApplyProject, Client, Notification, PaymentStatus, ProjectStatus, Projects, User, Freelancer, ProjectsAssigned
 from register.utils import Util
 from django.core.mail import send_mail
 from django.conf import settings
@@ -198,6 +198,19 @@ class FreelancerCreationSerializer(serializers.ModelSerializer):
             attrs['skills'] = skills_list
             
         return attrs
+    
+
+class FreelancerDetailsSerializer(serializers.ModelSerializer):
+    
+    # skills = serializers.ListField(child=serializers.CharField())
+    # languages = serializers.ListField(child=serializers.CharField())
+    
+    class Meta:
+        model = Freelancer
+        # fields = ['user', 'profession', 'skills','languages', 'reason_to_join','where_did_you_heard', 'resume','bio']
+        fields = '__all__'
+  
+
 
 class ClientCreationSerializer(serializers.ModelSerializer):
 
@@ -407,11 +420,10 @@ class PaymentStatusSerializer(serializers.ModelSerializer):
         fields= '__all__'
         
 # Project Profile File Serializer
-
-class ProjectFileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProjectFile
-        fields = '__all__'
+# class ProjectFileSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = ProjectFile
+#         fields = '__all__'
         
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:

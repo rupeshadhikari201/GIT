@@ -199,21 +199,29 @@ class ProjectsAssigned(models.Model):
 # Apply Projects
 class ApplyProject(models.Model):
     
+    STATUS_CHOICES = [
+        ('PA', 'Pending Approval'),
+        ('AC', 'Accepted'),
+        ('RE', 'Rejected'),
+    ]
+    
     frelancer_id = models.ForeignKey(Freelancer, on_delete=models.CASCADE)
     project_id = models.ForeignKey(Projects, on_delete=models.CASCADE)
     applied_at = models.DateTimeField(auto_now_add=True)
     proposal = models.TextField(blank=False)
+    status = models.CharField(max_length=2, choices=STATUS_CHOICES, default='PA')
     
     
 # Model to store project screenshot
-class ProjectFile(models.Model):
-    project = models.ForeignKey(Projects, on_delete=models.CASCADE)
-    file = models.FileField(upload_to='project_files/')
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+# class ProjectFile(models.Model):
+#     project = models.ForeignKey(Projects, on_delete=models.CASCADE)
+#     file = models.FileField(upload_to='project_files/')
+#     uploaded_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return self.file.name
+#     def __str__(self):
+#         return self.file.name
 
+# Notification Model
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
     message = models.TextField()
@@ -222,4 +230,11 @@ class Notification(models.Model):
 
     def __str__(self):
         return f'Notification for {self.user.username} - {self.message}'
+    
+
+# ProjectProposals
+# class ProjectProposals(models.Model):
+    
+#     requested_by = models.ForeignKey(Freelancer, on_delete=models.CASCADE)
+#     assigned_to = mo
     

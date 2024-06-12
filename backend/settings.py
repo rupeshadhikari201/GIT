@@ -39,6 +39,11 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'dbbackup',
+    
+    # swagger
+    'drf_yasg',
+    'rest_framework_swagger',
+    
 ]
 # say django to use account.user as the default user
 AUTH_USER_MODEL = "register.User"
@@ -72,11 +77,11 @@ REST_FRAMEWORK = {
     # JWT Authentication
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+    
 
 }
-
-# print("the base dir is " , os.path.join(BASE_DIR, 'templates'))
 
 ROOT_URLCONF = "backend.urls"
 
@@ -97,6 +102,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "backend.wsgi.application"
+
 
 database_url = os.getenv('DATABASE_URL')
 # print("the os environment,",os.environ.items())

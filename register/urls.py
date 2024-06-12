@@ -1,5 +1,5 @@
 from django.urls import path, include
-from register.views import DeleteUnassignedProject, GetClientProjects, LogoutView, PaymentStatusView, ProjectAssignView, ProjectFileView, ProjectStatusView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView
+from register.views import DeleteUnassignedProject, GetAppliedProject, GetClientProjects, LogoutView, PaymentStatusView, ProjectAssignView, ProjectFileView, ProjectStatusView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails
 # from register.views import logout_view
 
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -22,6 +22,7 @@ urlpatterns = [
      path('user-password-update/<uid>/<token>/', UserPasswordUpdateView.as_view(), name='user-password-update'),
 
      path('freelancer/', FreelancerCreationView.as_view(), name='freelancer'),
+     path('freelancer_details/', FreelancerDetails.as_view(), name='freelancer_details'),
      path('client/', ClientCreationView.as_view(), name='client'),
      path('create_project/', ProjectCreationView.as_view(), name='create_project'),
      path('update_project/<int:project_id>', ProjectUpdateView.as_view(), name='update_project'),
@@ -45,7 +46,7 @@ urlpatterns = [
      path('apply_project/', ApplyProjectView.as_view(), name='apply_project'),
      path('assign-projects/', ProjectAssignView.as_view(), name='assign-projects'),
      path('project/<int:project_id>/files/', ProjectFileView.as_view(), name='project_files'),
-     
+     path('get_applied_project/',GetAppliedProject.as_view(), name='get_applied_project'),
      
      # for authentication
      path('user-authentication/', authenticationview.UserAutheniticationExampleView.as_view(), name='user-authentication'),

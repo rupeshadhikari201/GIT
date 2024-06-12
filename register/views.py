@@ -2,16 +2,17 @@ from django.http import HttpResponse, JsonResponse
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics
+from rest_framework.generics import GenericAPIView
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.generics import  ListCreateAPIView
-from register.serializers import ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, PaymentStatusSerializer, ProjectAssignSerializer, ProjectCreationSerializer, ProjectFileSerializer, ProjectStatusSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer
+from register.serializers import ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, FreelancerDetailsSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, PaymentStatusSerializer, ProjectAssignSerializer, ProjectCreationSerializer, ProjectStatusSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer
 from django.contrib.auth import authenticate
 from register.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import IsAuthenticated
-from register.models import  Client, Freelancer, PaymentStatus, ProjectFile, ProjectStatus, ProjectsAssigned
+from register.models import  ApplyProject, Client, Freelancer, PaymentStatus, ProjectStatus, ProjectsAssigned
 from django.shortcuts import redirect, render
 from django.utils.encoding import smart_str
 from django.utils.http import urlsafe_base64_decode
@@ -187,7 +188,7 @@ class FreelancerCreationView(APIView):
     
     # get all the frelancers
     def get(self, request):
-        
+     
         # Get the queryset 
         freelancers = Freelancer.objects.all()
         
@@ -196,7 +197,24 @@ class FreelancerCreationView(APIView):
         
         return Response({'serialized_data': serialized.data})
         
+# Get Freelancer by Id
+class FreelancerDetails(APIView):
     
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):   
+      user  = request.user
+      
+      try:
+          freelancer_details= Freelancer.objects.get(user=user.id)
+      except Freelancer.DoesNotExist:
+          return Response({'error': 'Freelancer not found'}, status=status.HTTP_404_NOT_FOUND)
+
+      serialized= FreelancerDetailsSerializer(freelancer_details)
+      return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
+
+           
 class ClientCreationView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
@@ -437,7 +455,7 @@ class GetUnassingedProjects(APIView):
     
     def get(self, request):
         # Fetch all projects that are not assigned
-        unassigned_projects = Projects.objects.filter(project_assigned_status=False)
+        unassigned_projects = Projects.objects.filter(project_assigned_status=False).order_by('-created_at')
         serializer = GetUnassingedProjectSerializer(unassigned_projects, many=True)
         return Response({'data': serializer.data, 'msg': "Unassigned Projects Retrieved Successfully"}, status=status.HTTP_200_OK)
 
@@ -495,7 +513,26 @@ class ApplyProjectView(APIView):
             
             return Response({"msg": "Project Applied Sucess"}, status=status.HTTP_200_OK)
         return Response({"errors": serializer.errors}, status=status.HTTP_404_NOT_FOUND)
+
+# the api to get all the applied projects of a particular freelancer based on their token
+class GetAppliedProject(APIView):
     
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        # 1. get the user 
+        user = request.user
+        
+        try:
+            freelancer = Freelancer.objects.get(user=user)
+            # get applied projects from the table of this user
+            applied_projects = ApplyProject.objects.filter(frelancer_id=freelancer)
+            print(applied_projects)
+            serialized = ApplyProjectSerializer(applied_projects, many=True)
+            return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
+        except:
+            return Response({'error': 'User is not a freelancer. ',}, status=status.HTTP_404_NOT_FOUND)
     
     
 # API's to populate ProjectStatus
