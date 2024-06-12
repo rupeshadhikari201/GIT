@@ -1,5 +1,5 @@
 from django.urls import path, include
-from register.views import DeleteUnassignedProject, GetAppliedProject, GetClientProjects, LogoutView, PaymentStatusView, ProjectAssignView, ProjectFileView, ProjectStatusView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails
+from register.views import DeleteUnassignedProject, GetAppliedProject, GetClientProjects, LogoutView, PaymentStatusView, ProjectAssignView, ProjectFileView, ProjectStatusView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView
 # from register.views import logout_view
 
 from rest_framework_simplejwt.views import TokenRefreshView

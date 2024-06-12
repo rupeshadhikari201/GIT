@@ -369,17 +369,32 @@ class GetUserView(mixins.ListModelMixin,
         response.data['msg'] = "User Deletion Sucessfull"
         return Response({"msg":"User deleted success"},status=status.HTTP_200_OK)
     
-class UpdateUserView(mixins.UpdateModelMixin, generics.GenericAPIView):
+# class UpdateUserView(mixins.UpdateModelMixin, generics.GenericAPIView):
 
+#     renderer_classes = [UserRenderer]
+#     permission_classes = [IsAuthenticated]
+    
+#     queryset = User.objects.all()
+#     serializer_class = UpdateUserSerializer
+    
+#     def put(self, request):
+#         # print("put ", args)
+#         return self.update(request, pk=1)
+
+# Update User
+class UpdateUserView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
-    
-    queryset = User.objects.all()
-    serializer_class = UpdateUserSerializer
-    
-    def put(self, request):
-        # print("put ", args)
-        return self.update(request, pk=1)
+
+    # get the user
+    def patch(self, request):
+        user_queryset = User.objects.get(id=request.user.id)
+        print(request.data)
+        user_queryset.firstname = request.data['firstname']
+        user_queryset.lastname = request.data['lastname']
+        user_queryset.save()
+        
+        return Response({'msg': 'User Update Sucessfull'}, status=status.HTTP_200_OK)
     
     
 # Get all the projecct of the specific client
