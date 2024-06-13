@@ -213,13 +213,13 @@ class ApplyProject(models.Model):
     
     
 # Model to store project screenshot
-# class ProjectFile(models.Model):
-#     project = models.ForeignKey(Projects, on_delete=models.CASCADE)
-#     file = models.FileField(upload_to='project_files/')
-#     uploaded_at = models.DateTimeField(auto_now_add=True)
+class ProjectFile(models.Model):
+    project = models.ForeignKey(Projects, on_delete=models.CASCADE)
+    file = models.FileField(upload_to='project_files/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
-#     def __str__(self):
-#         return self.file.name
+    def __str__(self):
+        return self.file.name
 
 # Notification Model
 class Notification(models.Model):
