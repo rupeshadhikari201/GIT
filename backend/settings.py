@@ -150,8 +150,16 @@ USE_I18N = True
 USE_TZ = True
 
 
+# Static root
+print("base dir " , BASE_DIR)
+print("base url " , BASE_URL)
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+
+# Static File Storeage Backendf
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
