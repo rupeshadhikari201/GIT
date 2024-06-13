@@ -15,8 +15,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 BASE_URL = 'http://localhost:8000' if os.getenv('PRODUCTION') == 'False' else 'https://gokap.onrender.com'
 
-
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-%5q47umd@xh^prb1sx8mciadquxqg64-76d1&+z=8#w$shw#h4"
 
@@ -79,8 +77,10 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ),
-    
+}
 
+SWAGGER_SETTINGS = {
+   'USE_SESSION_AUTH': False
 }
 
 ROOT_URLCONF = "backend.urls"
@@ -105,9 +105,6 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 
 database_url = os.getenv('DATABASE_URL')
-# print("the os environment,",os.environ.items())
-# print("the database url is" , database_url)
-# Database
 DATABASES = {
     # "default": {
     #     "ENGINE": "django.db.backends.postgresql",
@@ -140,9 +137,7 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {
-    "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
