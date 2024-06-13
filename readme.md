@@ -38,13 +38,13 @@ Test-NetConnection -ComputerName dpg-co5pdsu3e1ms73b9m8k0-a.singapore-postgres.r
 
 
 # Commands
-# 1. connect to the database : \c database_name;
-# 2. list all databse        : \l
-# 3. list all schemas        : \dn
-# 4. list all views          : \dv
-# 5. list all tables         : \dt
-# 6. more information        : \dt+ table_name
-# 7. list all user           : \du
+1. connect to the database : \c database_name;
+2. list all databse        : \l
+3. list all schemas        : \dn
+4. list all views          : \dv
+5. list all tables         : \dt
+6. more information        : \dt+ table_name
+7. list all user           : \du
 
 
 # Django Admin Page is not loading css after deployment in render
@@ -77,3 +77,8 @@ Step 5: Check Render Static File Settings
 Environment: Python
 Build Command: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
 Start Command: gunicorn your_project_name.wsgi -->
+
+
+<!-- base urls of render -->
+base url : https://gokap.onrender.com
+base dir : /opt/render/project/src
