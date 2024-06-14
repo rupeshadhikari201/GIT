@@ -153,16 +153,21 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static root
+# Static files (CSS, JavaScript, Images)
 print("base dir " , BASE_DIR)
 print("base url " , BASE_URL)
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL  = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')        
 
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = "/static/"
+# Static File Storeage Backend
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage' 
 
-# Static File Storeage Backendf
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Media Files (Uploads)
+MEDIA_URL  = '/media/'                          # This is the URL that will be used to access media files in the browser. ex it can be accessed at http://your-domain.com/media/filename.jpg.
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')    # This is the absolute filesystem path to the directory where media files will be stored.
+''' MEDIA_URL and MEDIA_ROOT are settings in settings.py that define where media files will be stored and how they will be accessed.'''
+
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

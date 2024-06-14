@@ -82,3 +82,29 @@ Start Command: gunicorn your_project_name.wsgi -->
 <!-- base urls of render -->
 base url : https://gokap.onrender.com
 base dir : /opt/render/project/src
+
+
+# Fix Django Admin Page CSS not loading after Deployment, but works in localhost
+1. Configure Static Files Settings
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+<!-- Ensure that the static files storage backend is configured -->
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+2. Install WhiteNoise and add WhiteNoise to the MIDDLEWARE
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+]
+
+3. Update Render Build Command
+Build Command: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+Start Command: gunicorn your_project_name.wsgi
+
+
+# Customise Django Admin
+
+
+
+
