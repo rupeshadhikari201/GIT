@@ -103,6 +103,7 @@ class Freelancer(models.Model):
 
     def __str__(self):
         return str(self.user)
+
  
 
 class Client(models.Model):
@@ -215,7 +216,7 @@ class ApplyProject(models.Model):
 # Model to store project screenshot
 class ProjectFile(models.Model):
     project = models.ForeignKey(Projects, on_delete=models.CASCADE)
-    file = models.FileField(upload_to='project_files/')
+    file = models.FileField(upload_to='project_files/')             #Access the uploaded image via the URL: https://your-app.onrender.com/media/project_files/your_image.jpg.
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

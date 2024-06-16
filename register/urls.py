@@ -1,5 +1,5 @@
 from django.urls import path, include
-from register.views import DeleteUnassignedProject, GetAppliedProject, GetClientProjects, LogoutView, PaymentStatusView, ProjectAssignView, ProjectFileView, ProjectStatusView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView
+from register.views import DeleteUnassignedProject, GetAppliedProject, GetClientDetailsById, GetClientProjects, LogoutView, PaymentStatusView, ProjectAssignView, ProjectFileView, ProjectStatusView, UpdateFreelancerView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView
 # from register.views import logout_view
 
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -23,8 +23,10 @@ urlpatterns = [
 
      path('freelancer/', FreelancerCreationView.as_view(), name='freelancer'),
      path('freelancer_details/', FreelancerDetails.as_view(), name='freelancer_details'),
+     path('update/freelancer_details', UpdateFreelancerView.as_view(), name="update_frelancer"),
      path('client/', ClientCreationView.as_view(), name='client'),
      path('create_project/', ProjectCreationView.as_view(), name='create_project'),
+     path('client/details/<int:client_id>', GetClientDetailsById.as_view(), name='clinet_details_by_id'),
      path('update_project/<int:project_id>', ProjectUpdateView.as_view(), name='update_project'),
      path('delete_project/<int:project_id>', DeleteUnassignedProject.as_view(), name='delete_project'),
      path('get_unassigned_project/', GetUnassingedProjects.as_view(), name='get_unassigned_project'),

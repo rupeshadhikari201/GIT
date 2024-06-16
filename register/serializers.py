@@ -199,7 +199,11 @@ class FreelancerCreationSerializer(serializers.ModelSerializer):
             
         return attrs
     
-
+class FreelancerUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Freelancer
+        fields = '__all__'
+        
 class FreelancerDetailsSerializer(serializers.ModelSerializer):
     
     # skills = serializers.ListField(child=serializers.CharField())
@@ -400,6 +404,14 @@ class GetUnassingedProjectSerializer(serializers.ModelSerializer):
 
 class ApplyProjectSerializer(serializers.ModelSerializer):
     
+    class Meta:
+        model = ApplyProject
+        fields = '__all__'
+
+
+      
+class ApplyProjectAndProjectSerializer(serializers.ModelSerializer):
+    project_id = ProjectCreationSerializer(read_only=True)
     class Meta:
         model = ApplyProject
         fields = '__all__'

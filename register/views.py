@@ -6,7 +6,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.generics import  ListCreateAPIView
-from register.serializers import ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, FreelancerDetailsSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, PaymentStatusSerializer, ProjectAssignSerializer, ProjectCreationSerializer, ProjectFileSerializer, ProjectStatusSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer
+from register.serializers import ApplyProjectAndProjectSerializer, ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, FreelancerDetailsSerializer, FreelancerUpdateSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, PaymentStatusSerializer, ProjectAssignSerializer, ProjectCreationSerializer, ProjectFileSerializer, ProjectStatusSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer
 from django.contrib.auth import authenticate
 from register.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -542,12 +542,17 @@ class GetAppliedProject(APIView):
         try:
             freelancer = Freelancer.objects.get(user=user)
             # get applied projects from the table of this user
-            applied_projects = ApplyProject.objects.filter(frelancer_id=freelancer)
-            print(applied_projects)
-            serialized = ApplyProjectSerializer(applied_projects, many=True)
-            return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
-        except:
-            return Response({'error': 'User is not a freelancer. ',}, status=status.HTTP_404_NOT_FOUND)
+            # applied_projects = ApplyProject.objects.filter(frelancer_id=freelancer)
+            # applied_projects = ApplyProject.objects.select_related('project_id').all()
+            applied_projects = ApplyProject.objects.filter(frelancer_id=freelancer).select_related('project_id').all()
+            print(applied_projects.values_list())
+            try:
+                serialized = ApplyProjectAndProjectSerializer(applied_projects, many=True)
+                return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
+            except Exception as e: 
+                return Response({'error_message' : str(e)})
+        except Exception as e:
+            return Response({'error': str(e),}, status=status.HTTP_404_NOT_FOUND)
     
     
 # API's to populate ProjectStatus
@@ -580,3 +585,47 @@ class ProjectFileView(APIView):
             serializer.save()
             return Response({'msg': 'File uploaded successfully'}, status=status.HTTP_201_CREATED)
         return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+# get the projects details by id
+class GetProjectDetailsByIdView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes =  [ IsAuthenticated]
+    
+    def get(self, request):
+        projects = ApplyProject.objects.select_related('project_id').all()
+        
+# Update Freelancer View
+class UpdateFreelancerView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request):
+        user = request.user
+        data = request.data
+        data['user'] = user.id
+        freelancer = Freelancer.objects.get(user=user.id)
+        queryset = FreelancerCreationSerializer(freelancer,data=data,partial=True)
+        print("queryset",queryset)
+        if queryset.is_valid():
+            queryset.save()
+            return Response({'msg':"success", 'data': queryset.data}, status=status.HTTP_200_OK)
+        return Response({'error': queryset.errors}, status=status.HTTP_400_BAD_REQUEST)  
+        
+    def patch(self, request):
+        pass
+
+# Get Clinet Details by Id
+class GetClientDetailsById(APIView):
+    renderer_classes = [UserRenderer]
+    # permission_classes = [IsAuthenticated]
+    
+    def get(self, request, client_id):
+        client = Client.objects.get(pk=client_id)
+        user = User.objects.get(pk= client.pk)
+        
+        print(user.firstname)
+        queryset = UserRegistrationSerializer(user)
+        return Response({'serialized_data': queryset.data})
+
+        
