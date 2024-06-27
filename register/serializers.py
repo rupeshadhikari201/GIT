@@ -276,7 +276,7 @@ class ProjectCreationSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Projects
-        fields = ['project_category', 'title','description', 'project_price', 'project_deadline','skills_required','client']
+        fields = ['project_category', 'title','description', 'project_price', 'project_deadline','skills_required','client','applied_count']
         
 class SendUserVerificationSerializer(serializers.ModelSerializer):
     

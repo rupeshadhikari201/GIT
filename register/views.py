@@ -1,4 +1,7 @@
+import json
 from django.http import HttpResponse, JsonResponse
+from django.db.models import Count
+from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics
@@ -7,18 +10,19 @@ from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.generics import  ListCreateAPIView
 from register.serializers import ApplyProjectAndProjectSerializer, ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, FreelancerDetailsSerializer, FreelancerUpdateSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, PaymentStatusSerializer, ProjectAssignSerializer, ProjectCreationSerializer, ProjectFileSerializer, ProjectStatusSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login, logout
 from register.renderers import UserRenderer
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import IsAuthenticated
 from register.models import  ApplyProject, Client, Freelancer, PaymentStatus, ProjectFile, ProjectStatus, ProjectsAssigned
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.encoding import smart_str
 from django.utils.http import urlsafe_base64_decode
 from register.models import User, Projects
 import logging
 import os
+from django.db.models import Q
 
 
 logger = logging.getLogger(__name__)
@@ -73,6 +77,8 @@ class UserLoginView(APIView):
                 # IF USER IS VERIFIED 
                 print("check if verified : ",serializer.data.get('is_verified'))
                 if serializer.data.get('is_verified'):
+                    # The signal is typically triggered by login() function from django.contrib.auth.
+                    login(request, user)  # Add this line to trigger the signal
                     token = get_tokens_for_user(user)
                     user_type = user.user_type  # Fetch user_type from user object
                     user_id = user.id 
@@ -496,36 +502,104 @@ class DeleteUnassignedProject(APIView):
             return Response({"msg": "Project is Assigned"}, status=status.HTTP_400_BAD_REQUEST )  
         else:
             return Response({"msg": "Project Does Not Exists"}, status=status.HTTP_400_BAD_REQUEST )  
-               
+
+# Logout View             
+# class LogoutView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request, format=None):
+#         try:
+#             refresh_token = request.data["refresh"]
+#             token = RefreshToken(refresh_token)
+#             token.blacklist()
+#             return Response({"msg": "Logout successful."}, status=status.HTTP_205_RESET_CONTENT)
+#         except Exception as e:
+#             return Response({"msg": request, "refresh": request.data['refresh'], "error": str(e),}, status=status.HTTP_400_BAD_REQUEST)
    
-# Logout View  
+'''
+This logout view does the following:
+
+It uses the IsAuthenticated permission class to ensure only authenticated users can access this view.
+It expects a POST request with a "refresh_token" in the request data.
+It blacklists the refresh token to invalidate it, preventing its future use.
+It calls Django's logout() function to log out the user on the server side.
+It returns a success message if the logout is successful, or an error message if something goes wrong.
+'''
+# class LogoutView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+#         try:
+#             refresh_token = request.data["refresh_token"]
+#             token = RefreshToken(refresh_token)
+#             token.blacklist()
+
+#             logout(request)
+
+#             return Response({"success": "User logged out successfully"}, status=status.HTTP_205_RESET_CONTENT)
+#         except Exception as e:
+#             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# class LogoutView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+#         try:
+#             auth_header = request.headers.get('Authorization')
+#             if not auth_header or not auth_header.startswith('Bearer '):
+#                 return Response({"error": "Invalid token format"}, status=status.HTTP_400_BAD_REQUEST)
+
+#             token = auth_header.split(' ')[1]
+#             AccessToken(token)  # This will raise an error if the token is invalid
+
+#             # Perform any additional logout actions here
+#             logout(request)
+
+#             return Response({"success": "User logged out successfully"}, status=status.HTTP_205_RESET_CONTENT)
+#         except TokenError as e:
+#             return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+#         except Exception as e:
+#             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, format=None):
+    def post(self, request):
         try:
-            refresh_token = request.data["refresh"]
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-            return Response({"msg": "Logout successful."}, status=status.HTTP_205_RESET_CONTENT)
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return Response({"error": "Invalid token format"}, status=status.HTTP_400_BAD_REQUEST)
+
+            token = auth_header.split(' ')[1]
+            token_obj = AccessToken(token)
+            
+            # Add token to blacklist
+            outstanding_token = OutstandingToken.objects.get(token=token)
+            BlacklistedToken.objects.create(token=outstanding_token)
+
+            return Response({"success": "User logged out successfully"}, status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
-            return Response({"msg": request, "refresh": request.data['refresh'], "error": str(e),}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 # Apply Projects
 class ApplyProjectView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
-    
     def post(self, request):
         print("id", request.user.id)
         data = request.data
         data['frelancer_id'] = request.user.id
         serializer = ApplyProjectSerializer(data= data)
-        
+        print("data is",data)
+        project = Projects.objects.get(pk=data['project_id'])
         if serializer.is_valid():
             serializer.save()
-            
+            project.applied_count += 1
+            project.save()
             return Response({"msg": "Project Applied Sucess"}, status=status.HTTP_200_OK)
         return Response({"errors": serializer.errors}, status=status.HTTP_404_NOT_FOUND)
 
@@ -592,8 +666,11 @@ class GetProjectDetailsByIdView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes =  [ IsAuthenticated]
     
-    def get(self, request):
-        projects = ApplyProject.objects.select_related('project_id').all()
+    def get(self, request,project_id):
+        projects = get_object_or_404(Projects,pk=project_id)
+        seralizer = ProjectCreationSerializer(projects)
+        
+        return Response({"serialized_data":seralizer.data})
         
 # Update Freelancer View
 class UpdateFreelancerView(APIView):
@@ -618,7 +695,7 @@ class UpdateFreelancerView(APIView):
 # Get Clinet Details by Id
 class GetClientDetailsById(APIView):
     renderer_classes = [UserRenderer]
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     
     def get(self, request, client_id):
         client = Client.objects.get(pk=client_id)
@@ -627,5 +704,77 @@ class GetClientDetailsById(APIView):
         print(user.firstname)
         queryset = UserRegistrationSerializer(user)
         return Response({'serialized_data': queryset.data})
+    
+# Search API based on Freelancer Skills
+class FreelancerSearchView(APIView):
+    
+    def get(self, request):
+        skills = request.query_params.get('skills', '').lower().split(',')
+        languages = request.query_params.get('languages', '').lower().split(',')
+        profession = request.query_params.get('profession', '').lower()
 
+        # Start with a base queryset
+        queryset = Freelancer.objects.all()
         
+        # This checks if the skills list is not empty and not just a list with an empty string. It ensures we only apply the filter if actual skills were provided in the query.
+        if skills and skills != ['']:
+            # This initializes an empty Q object. Q objects in Django are used to build complex database queries.
+            skill_query = Q()
+            for skill in skills:
+                skill_query |= Q(skills__icontains=skill.strip())
+                # skills__icontains is a Django lookup that checks if the skills field contains the given value, case-insensitive.
+                # strip() removes any leading or trailing whitespace from the skill.
+                # The |= operator is used to combine this new condition with the existing skill_query using OR logic.
+            queryset = queryset.filter(skill_query)
+            
+            
+        if languages and  languages != ['']:
+            language_query = Q()
+            for language in languages:
+                language_query |= Q(languages__icontains=language.strip())
+            queryset = queryset.filter(language_query)
+            
+        if profession : 
+            queryset =  queryset.filter(profession__icontains=profession)
+            
+        # If no filters applied, return an error
+        if not (skills or languages or profession):
+            return Response({"error": "No search criteria provided"}, status=400)
+        
+        
+        # Create a Q object for each skill
+        # It uses __icontains for case-insensitive partial matching on all fields.
+        # query = Q()
+        # for skill in skills:
+        #     query |= Q(skills__icontains=skill)
+
+        print("Freelancer Queryset : ", queryset.query)
+        serializer = FreelancerCreationSerializer(queryset, many=True)
+        print("Serializer : ", serializer)
+        return Response(serializer.data)
+
+class PriceFilterView(APIView): 
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, price_start, price_end, n_applicant): 
+        
+        if(n_applicant < 0 and price_end > 0):
+             queryset = Projects.objects.filter(project_price__range=(price_start,price_end))
+             serialized = ProjectCreationSerializer(queryset, many=True)
+             return Response({'serialized_data': serialized.data}, status=status.HTTP_201_CREATED)
+        if(n_applicant >=0 and price_end > 0):
+             queryset = Projects.objects.filter(applied_count__range=(0,n_applicant)  ,project_price__range=(price_start,price_end))
+             serialized = ProjectCreationSerializer(queryset, many=True)
+             return Response({'serialized_data': serialized.data}, status=status.HTTP_201_CREATED)
+        if(price_end <= 0 and n_applicant >=0):
+             queryset = Projects.objects.filter(applied_count__range=(0,n_applicant))
+             serialized = ProjectCreationSerializer(queryset, many=True)
+             return Response({'serialized_data': serialized.data}, status=status.HTTP_201_CREATED)
+        if(price_end == 0 and n_applicant < 0):
+            return Response({"error":"Invalid filter"},status=status.HTTP_400_BAD_REQUEST)  
+            
+        
+       
+
+

@@ -1,5 +1,5 @@
 from django.urls import path, include
-from register.views import DeleteUnassignedProject, GetAppliedProject, GetClientDetailsById, GetClientProjects, LogoutView, PaymentStatusView, ProjectAssignView, ProjectFileView, ProjectStatusView, UpdateFreelancerView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView
+from register.views import DeleteUnassignedProject, FreelancerSearchView, GetAppliedProject, GetClientDetailsById, GetClientProjects, GetProjectDetailsByIdView, LogoutView, PaymentStatusView, PriceFilterView, ProjectAssignView, ProjectFileView, ProjectStatusView, UpdateFreelancerView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView
 # from register.views import logout_view
 
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -45,6 +45,7 @@ urlpatterns = [
      # path('get-user/', views.GetUserView, name='get_user'),
      
      path('get-client-project/', GetClientProjects.as_view(), name='get-client-project'),
+     path('get-client/project/<int:project_id>/',GetProjectDetailsByIdView.as_view(),name="get_project_detail"),
      path('apply_project/', ApplyProjectView.as_view(), name='apply_project'),
      path('assign-projects/', ProjectAssignView.as_view(), name='assign-projects'),
      path('project/<int:project_id>/files/', ProjectFileView.as_view(), name='project_files'),
@@ -57,6 +58,10 @@ urlpatterns = [
      path('project_status/', ProjectStatusView.as_view(), name='project_status'),
      path('payment_status/', PaymentStatusView.as_view(), name='project_status'),
      # path('', include(router.urls)),
+     
+     # search
+     path('search/', FreelancerSearchView.as_view(), name='freelancer-search'),
+     path('price_filter/<int:price_start>/<int:price_end>/<int:n_applicant>', PriceFilterView.as_view(), name='price_filter'), 
 ] 
 
 urlpatterns = format_suffix_patterns(urlpatterns)

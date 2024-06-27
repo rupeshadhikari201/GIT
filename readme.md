@@ -103,8 +103,19 @@ Build Command: pip install -r requirements.txt && python manage.py collectstatic
 Start Command: gunicorn your_project_name.wsgi
 
 
-# Customise Django Admin
+# PostgreSql Error
+<!-- !postgres does not know where to find the server configuration file.
+!You must specify the --config-file or -D invocation option or set the PGDATA environment variable. -->
+-> The error message you're encountering indicates that PostgreSQL cannot locate its server configuration file (postgresql.conf). This file contains essential settings for running the database server. 
+-> Setting the PGDATA Environment Variable : 
+setx PGDATA "C:\Program Files\PostgreSQL\16\data"
+<!-- !postgres does not know where to find the database system data. -->
+-> The error message you're encountering indicates that PostgreSQL cannot find its database system data directory. This directory is crucial as it contains all the databases and transaction logs. You have three options to specify the location of the data directory:
+-> 1. Using the -D Invocation Option
+postgres -D "C:/Program Files/PostgreSQL/16/data"
+-> 2. Setting the PGDATA Environment Variable
+setx PGDATA "C:\Program Files\PostgreSQL\16\data"
 
-
-
+//start postgres
+pg_ctl -D "C:\Program Files\PostgreSQL\16\data" start
 

@@ -87,17 +87,19 @@ class User(AbstractBaseUser):
 class Freelancer(models.Model):
     WHERE_DID_YOU_HEARD = (
         ('I' , 'Instagram'),
-        ('F' , 'Facebook'),
+        ('Fa' , 'Facebook'),
+        ('F','Friends'),
         ('T' , 'Twitter'),
         ('G' , 'Google'),
-        ('O' , 'Others')    
+        ('O' , 'Others'),
+        ('Y','Youtube')    
     )
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     profession = models.CharField(max_length=255)
     skills = ArrayField(models.CharField(max_length=100), blank=True, null=True)
     languages = ArrayField(models.CharField(max_length=100), blank=True, null=True)
     reason_to_join = models.TextField()
-    where_did_you_heard = models.CharField(max_length=1, choices=WHERE_DID_YOU_HEARD)
+    where_did_you_heard = models.CharField(max_length=10, choices=WHERE_DID_YOU_HEARD)
     resume = models.FileField(upload_to='resumes/', blank=True, null=True)
     bio = models.TextField()
 
@@ -143,14 +145,7 @@ class PaymentStatus(models.Model):
     def __str__(self):
         return self.payment_status
 
-class Payment(models.Model):
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_status = models.ForeignKey(PaymentStatus, on_delete=models.SET_NULL, null=True, blank=True)
-    project = models.ForeignKey('Projects', on_delete=models.CASCADE, related_name='payments')
 
-    
-    def __str__(self):
-        return f"${self.amount} - {self.payment_status}"
     
 class Projects(models.Model):
     
@@ -176,17 +171,24 @@ class Projects(models.Model):
     skills_required = ArrayField(models.CharField(max_length=100), default=list)
     payment_status = models.ForeignKey(PaymentStatus, on_delete=models.CASCADE, default=get_default_payment_status)
     project_status = models.ForeignKey(ProjectStatus, on_delete=models.CASCADE, default=get_default_project_status)
-    
     project_assigned_status = models.BooleanField(default=False)
-
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='projects_created')
-
-
+    applied_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
     
     def __str__(self):
         return self.title
+
+class Payment(models.Model):
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_status = models.ForeignKey(PaymentStatus, on_delete=models.SET_NULL, null=True, blank=True)
+    project = models.ForeignKey(Projects, on_delete=models.CASCADE, related_name='payments')
+
+    
+    def __str__(self):
+        return f"${self.amount} - {self.payment_status}"
+
     
 class ProjectsAssigned(models.Model):
     
@@ -197,9 +199,10 @@ class ProjectsAssigned(models.Model):
     
     
     
-# Apply Projects
+# Apply Projec
 class ApplyProject(models.Model):
-    
+    class Meta:
+        unique_together = ('project_id','frelancer_id')
     STATUS_CHOICES = [
         ('PA', 'Pending Approval'),
         ('AC', 'Accepted'),
@@ -239,3 +242,11 @@ class Notification(models.Model):
 #     requested_by = models.ForeignKey(Freelancer, on_delete=models.CASCADE)
 #     assigned_to = mo
     
+class Address(models.Model):
+    user = models.ForeignKey(User,on_delete=models.CASCADE,)
+    country = models.TextField()
+    state = models.TextField()
+    city = models.TextField()
+    zip_code = models.TextField()
+    def __str__(self):
+        return self.user.firstname
