@@ -125,17 +125,23 @@ DATABASES = {
     #     default=database_url,
     #     conn_max_age=600
     # )
-    'default': {
-    'ENGINE': 'django.db.backends.postgresql',
-    'NAME': os.getenv('PGDATABASE'),
-    'USER': os.getenv('PGUSER'),
-    'PASSWORD': os.getenv('PGPASSWORD'),
-    'HOST': os.getenv('PGHOST'),
-    'PORT': os.getenv('PGPORT', 5432),
-    'OPTIONS': {
-      'sslmode': 'require',
-    },
-    }
+    # 'default': {
+    # 'ENGINE': 'django.db.backends.postgresql',
+    # 'NAME': os.getenv('PGDATABASE'),
+    # 'USER': os.getenv('PGUSER'),
+    # 'PASSWORD': os.getenv('PGPASSWORD'),
+    # 'HOST': os.getenv('PGHOST'),
+    # 'PORT': os.getenv('PGPORT', 5432),
+    # 'OPTIONS': {
+    #   'sslmode': 'require',
+    # },
+    # }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+        # ssl_require=True,
+    )
 }
 
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")
