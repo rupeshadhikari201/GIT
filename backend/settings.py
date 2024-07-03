@@ -36,6 +36,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+    
+    # dbbackup
     'dbbackup',
     
     # swagger
@@ -68,6 +70,7 @@ MIDDLEWARE = [
 #     "http://127.0.0.1:8000",
 # ]
 CORS_ALLOW_ALL_ORIGINS = True
+
 # Rest Framework
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
@@ -116,12 +119,23 @@ DATABASES = {
     #     "PORT": '5432',
     #     "PASSWORD": 12345
     # },
-    'default': dj_database_url.config(
-        # Replace this value with your local database's connection string.
-        # default="postgres://rupesh:G9CkZVNuCB1yOwtNvq78oTFS46Xvtr23@dpg-cn8popgl5elc738utv70-a.oregon-postgres.render.com/users_5b7j",
-        default=database_url,
-        conn_max_age=600
-    )
+    # 'default': dj_database_url.config(
+    #     # Replace this value with your local database's connection string.
+    #     # default="postgres://rupesh:G9CkZVNuCB1yOwtNvq78oTFS46Xvtr23@dpg-cn8popgl5elc738utv70-a.oregon-postgres.render.com/users_5b7j",
+    #     default=database_url,
+    #     conn_max_age=600
+    # )
+    'default': {
+    'ENGINE': 'django.db.backends.postgresql',
+    'NAME': os.getenv('PGDATABASE'),
+    'USER': os.getenv('PGUSER'),
+    'PASSWORD': os.getenv('PGPASSWORD'),
+    'HOST': os.getenv('PGHOST'),
+    'PORT': os.getenv('PGPORT', 5432),
+    'OPTIONS': {
+      'sslmode': 'require',
+    },
+    }
 }
 
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")
@@ -213,5 +227,7 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
+
 DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
 DBBACKUP_STORAGE_OPTIONS = {'location': BASE_DIR / 'dbbackup'}
+print(DBBACKUP_STORAGE_OPTIONS['location'])

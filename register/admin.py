@@ -1,5 +1,5 @@
 from django.contrib import admin
-from register.models import User, Payment, PaymentStatus, ProjectStatus, Client, Freelancer, Projects
+from register.models import Address, User, Payment, PaymentStatus, ProjectStatus, Client, Freelancer, Projects
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 # Register your models here.
@@ -41,3 +41,4 @@ admin.site.register(PaymentStatus)
 admin.site.register(ProjectStatus)
 admin.site.register(Client)
 admin.site.register(Projects)
+admin.site.register(Address)

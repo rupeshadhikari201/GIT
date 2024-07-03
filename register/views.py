@@ -774,7 +774,38 @@ class PriceFilterView(APIView):
         if(price_end == 0 and n_applicant < 0):
             return Response({"error":"Invalid filter"},status=status.HTTP_400_BAD_REQUEST)  
             
-        
+class ProjectSearchView(APIView):
+    renderer_classes = [UserRenderer]
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        title = request.query_params.get('title', None)
+        description = request.query_params.get('description', None)
+        min_price = request.query_params.get('min_price', None)
+        max_price = request.query_params.get('max_price', None)
+        min_applicants = request.query_params.get('min_applicants', None)
+        max_applicants = request.query_params.get('max_applicants', None)
+
+        queryset = Projects.objects.all()
+
+        if title:
+            queryset = queryset.filter(title__icontains=title)
+        if description:
+            queryset = queryset.filter(description__icontains=description)
+        if min_price:
+            queryset = queryset.filter(project_price__gte=min_price)
+        if max_price:
+            queryset = queryset.filter(project_price__lte=max_price)
+        if min_applicants:
+            queryset = queryset.filter(applied_count__gte=min_applicants)
+        if max_applicants:
+            queryset = queryset.filter(applied_count__lte=max_applicants)
+
+        if not (title or description or min_price or max_price or min_applicants or max_applicants):
+            return Response({"error": "No search criteria provided"}, status=400)
+
+        serialized = ProjectCreationSerializer(queryset, many=True)
+        return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
        
 
 

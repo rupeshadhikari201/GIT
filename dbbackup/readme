@@ -1,0 +1,6 @@
+Error running:  pg_dump --dbname=postgresql://rupesh:0GT4tckzjEYdWeMiOJvdBUzYk0qSYQlH@dpg-co5pdsu3e1ms73b9m8k0-a.singapore-postgres.render.com/gokap_postgres --format=custom
+pg_dump: error: connection to server at "dpg-co5pdsu3e1ms73b9m8k0-a.singapore-postgres.render.com" (13.214.97.86), port 5432 failed: Connection timed out (0x0000274C/10060)
+
+--> python manage.py dbbackup --database=postgresql://rupesh:0GT4tckzjEYdWeMiOJvdBUzYk0qSYQlH@dpg-co5pdsu3e1ms73b9m8k0-a.singapore-postgres.render.com/gokap_postgres --format=custom --compress=9 --verbosity=2
+
+--> python manage.py dbrestore --database=postgresql://rupesh:0GT4tckzjEYdWeMiOJvdBUzYk0qSYQlH@dpg-co5pdsu3e1ms73b9m8k0-a.singapore-postgres.render.com/gokap_postgres --format=custom --verbosity=2

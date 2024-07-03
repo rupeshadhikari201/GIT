@@ -1,5 +1,5 @@
 from django.urls import path, include
-from register.views import DeleteUnassignedProject, FreelancerSearchView, GetAppliedProject, GetClientDetailsById, GetClientProjects, GetProjectDetailsByIdView, LogoutView, PaymentStatusView, PriceFilterView, ProjectAssignView, ProjectFileView, ProjectStatusView, UpdateFreelancerView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView
+from register.views import DeleteUnassignedProject, FreelancerSearchView, GetAppliedProject, GetClientDetailsById, GetClientProjects, GetProjectDetailsByIdView, LogoutView, PaymentStatusView, PriceFilterView, ProjectAssignView, ProjectFileView, ProjectStatusView, UpdateFreelancerView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView, ProjectSearchView
 # from register.views import logout_view
 
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -62,6 +62,10 @@ urlpatterns = [
      # search
      path('search/', FreelancerSearchView.as_view(), name='freelancer-search'),
      path('price_filter/<int:price_start>/<int:price_end>/<int:n_applicant>', PriceFilterView.as_view(), name='price_filter'), 
+     # Example usage of the ProjectSearchView API:
+     # To search for projects with a title containing "web", a minimum price of 100, and a maximum of 5 applicants:
+     # GET /search_project/?title=web&min_price=100&max_applicants=5
+     path('search_project/', ProjectSearchView.as_view(), name='search_project'),
 ] 
 
 urlpatterns = format_suffix_patterns(urlpatterns)
