@@ -20,6 +20,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.encoding import smart_str
 from django.utils.http import urlsafe_base64_decode
 from register.models import User, Projects
+from django.utils import timezone
 import logging
 import os
 from django.db.models import Q
@@ -395,13 +396,20 @@ class UpdateUserView(APIView):
     # get the user
     def patch(self, request):
         user_queryset = User.objects.get(id=request.user.id)
+        print("user_queryset", user_queryset)
+        last_updated = user_queryset.updated_at  # Assuming you have a field to track the last update time
+        current_time = timezone.now()
+        
+        if last_updated and (current_time - last_updated).days < 7:
+            return Response({'error': f'Your name was updated on : { last_updated }You can only update your name only after a week.'}, status=status.HTTP_400_BAD_REQUEST)
+        
         print(request.data)
         user_queryset.firstname = request.data['firstname']
         user_queryset.lastname = request.data['lastname']
+        user_queryset.last_updated = current_time  # Update the last updated time
         user_queryset.save()
         
         return Response({'msg': 'User Update Sucessfull'}, status=status.HTTP_200_OK)
-    
     
 # Get all the projecct of the specific client
 class GetClientProjects(APIView):

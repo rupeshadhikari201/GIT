@@ -108,17 +108,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
-
 database_url = os.getenv('DATABASE_URL')
 DATABASES = {
-    # "default": {
-    #     "ENGINE": "django.db.backends.postgresql",
-    #     "NAME": "postgres1",
-    #     "USER": "postgres",
-    #     "HOST": "localhost",
-    #     "PORT": '5432',
-    #     "PASSWORD": 12345
-    # },
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "postgres1",
+        "USER": "postgres",
+        "HOST": "localhost",
+        "PORT": '5432',
+        "PASSWORD": 12345
+    },
     # 'default': dj_database_url.config(
     #     # Replace this value with your local database's connection string.
     #     # default="postgres://rupesh:G9CkZVNuCB1yOwtNvq78oTFS46Xvtr23@dpg-cn8popgl5elc738utv70-a.oregon-postgres.render.com/users_5b7j",
@@ -136,12 +135,12 @@ DATABASES = {
     #   'sslmode': 'require',
     # },
     # }
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        conn_health_checks=True,
-        # ssl_require=True,
-    )
+    # 'default': dj_database_url.config(
+    #     default=os.environ.get('DATABASE_URL'),
+    #     conn_max_age=600,
+    #     conn_health_checks=True,
+    #     # ssl_require=True,
+    # )
 }
 
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")
@@ -233,7 +232,12 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
-
+# DBBACKUP library configurations
 DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
 DBBACKUP_STORAGE_OPTIONS = {'location': BASE_DIR / 'dbbackup'}
+# Use the --no-owner and --no-acl options:
+# These options tell pg_restore to skip ownership and access control commands. Modify your Django settings to include these options:
+DBBACKUP_POSTGRES_RESTORE_EXTRA_ARGS = ['--no-owner', '--no-acl']
+# hey, when you are unable to restore the database run this command 
+# pg_restore --dbname=postgresql://gokap-database_owner:4fRbNwksu3Va@ep-fragrant-darkness-a1vcs7w6.ap-southeast-1.aws.neon.tech/gokap-database --single-transaction --clean --no-owner --no-acl path/to/your/backup/file(full path)
 print(DBBACKUP_STORAGE_OPTIONS['location'])
