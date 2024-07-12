@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+from jsonschema import ValidationError
 
 class UserManager(BaseUserManager):
     
@@ -197,7 +198,11 @@ class ProjectsAssigned(models.Model):
     assigned_at = models.DateTimeField(auto_now_add=True)
     revoke = models.BooleanField(default=False)
     
-    
+    def save(self, *args, **kwargs):
+        if ProjectsAssigned.objects.filter(project_id=self.project_id).exists():
+            raise ValidationError(f"Project {self.project_id} is already assigned to a freelancer")
+        else:
+            super().save(*args, **kwargs)
     
 # Apply Projec
 class ApplyProject(models.Model):

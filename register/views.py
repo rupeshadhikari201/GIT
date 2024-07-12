@@ -816,4 +816,3 @@ class ProjectSearchView(APIView):
         return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
        
 
-
