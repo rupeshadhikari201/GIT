@@ -1,5 +1,5 @@
 from django.urls import path, include
-from register.views import DeleteUnassignedProject, FreelancerSearchView, GetAppliedProject, GetClientDetailsById, GetClientProjects, GetProjectDetailsByIdView, LogoutView, PaymentStatusView, PriceFilterView, ProjectAssignView, ProjectFileView, ProjectStatusView, UpdateFreelancerView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView, ProjectSearchView
+from register.views import AddressDetailView, DeleteUnassignedProject, FreelancerSearchView, GetAppliedProject, GetClientDetailsById, GetClientProjects, GetProjectDetailsByIdView, LogoutView, PaymentStatusView, PriceFilterView, ProjectAssignView, ProjectFileView, ProjectStatusView, UpdateFreelancerView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView, ProjectSearchView
 # from register.views import logout_view
 
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -66,6 +66,9 @@ urlpatterns = [
      # To search for projects with a title containing "web", a minimum price of 100, and a maximum of 5 applicants:
      # GET /search_project/?title=web&min_price=100&max_applicants=5
      path('search_project/', ProjectSearchView.as_view(), name='search_project'),
+     
+     # address url
+      path('get_address/', AddressDetailView.as_view(), name='address-detail'),
 ] 
 
 urlpatterns = format_suffix_patterns(urlpatterns)

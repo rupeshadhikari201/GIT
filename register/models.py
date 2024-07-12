@@ -22,6 +22,7 @@ class UserManager(BaseUserManager):
 
         user.set_password(password)
         user.save(using=self.db)
+        Address.objects.create(user=user) # Create an address for the user
         return user
 
     def create_superuser(self, firstname, lastname, email, password=None, ):
@@ -248,10 +249,11 @@ class Notification(models.Model):
 #     assigned_to = mo
     
 class Address(models.Model):
-    user = models.ForeignKey(User,on_delete=models.CASCADE,)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     country = models.TextField()
     state = models.TextField()
     city = models.TextField()
     zip_code = models.TextField()
+
     def __str__(self):
-        return self.user.firstname
+        return f"{self.user.firstname} {self.user.lastname} - {self.city}, {self.state}, {self.country}, {self.zip_code}"

@@ -9,7 +9,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.generics import  ListCreateAPIView
-from register.serializers import ApplyProjectAndProjectSerializer, ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, FreelancerDetailsSerializer, FreelancerUpdateSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, PaymentStatusSerializer, ProjectAssignSerializer, ProjectCreationSerializer, ProjectFileSerializer, ProjectStatusSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer
+from register.serializers import AddressSerializer, ApplyProjectAndProjectSerializer, ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, FreelancerDetailsSerializer, FreelancerUpdateSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, PaymentStatusSerializer, ProjectAssignSerializer, ProjectCreationSerializer, ProjectFileSerializer, ProjectStatusSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer
 from django.contrib.auth import authenticate, login, logout
 from register.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
@@ -815,4 +815,38 @@ class ProjectSearchView(APIView):
         serialized = ProjectCreationSerializer(queryset, many=True)
         return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
        
+# views for addresss
+class AddressDetailView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        address = request.user.address
+        serializer = AddressSerializer(address)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def post(self, request):
+        data = request.data
+        data['user'] = request.user.id
+        serializer = AddressSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        address = request.user.address
+        serializer = AddressSerializer(address, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"msg" : "Address updated successfully", "data" : serializer.data}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request):
+        print("user is : ", request.user)
+        print("address is : ", request.user.address)
+        try: 
+            address = request.user.address
+            address.delete()
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"msg": "Address deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
