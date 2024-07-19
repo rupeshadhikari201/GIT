@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'drf_yasg',
     'rest_framework_swagger',
     
+    # django extensions
+    
 ]
 # say django to use account.user as the default user
 AUTH_USER_MODEL = "register.User"
@@ -110,14 +112,14 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 database_url = os.getenv('DATABASE_URL')
 DATABASES = {
-    # "default": {
-    #     "ENGINE": "django.db.backends.postgresql",
-    #     "NAME": "postgres1",
-    #     "USER": "postgres",
-    #     "HOST": "localhost",
-    #     "PORT": '5432',
-    #     "PASSWORD": 12345
-    # },
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "postgres1",
+        "USER": "postgres",
+        "HOST": "localhost",
+        "PORT": '5432',
+        "PASSWORD": 12345
+    },
     # 'default': dj_database_url.config(
     #     # Replace this value with your local database's connection string.
     #     # default="postgres://rupesh:G9CkZVNuCB1yOwtNvq78oTFS46Xvtr23@dpg-cn8popgl5elc738utv70-a.oregon-postgres.render.com/users_5b7j",
@@ -135,7 +137,7 @@ DATABASES = {
     #   'sslmode': 'require',
     # },
     # }
-    'default': dj_database_url.config(
+    'neon': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
         conn_max_age=600,
         conn_health_checks=True,

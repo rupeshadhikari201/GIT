@@ -1,5 +1,5 @@
 from django.urls import path, include
-from register.views import AddressDetailView, DeleteUnassignedProject, FreelancerSearchView, GetAppliedProject, GetClientDetailsById, GetClientProjects, GetProjectDetailsByIdView, LogoutView, PaymentStatusView, PriceFilterView, ProjectAssignView, ProjectFileView, ProjectStatusView, UpdateFreelancerView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView, ProjectSearchView
+from register.views import AddressDetailView, DeleteUnassignedProject, FreelancerSearchView, GetAppliedProject, GetClientDetailsById, GetClientProjects, GetProjectDetailsByIdView, LogoutView, PaymentStatusView, PriceFilterView, ProjectAssignView, ProjectFileView, ProjectStatusView, UpdateFreelancerView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView, ProjectSearchView, AppliedFreelancersVeiw
 # from register.views import logout_view
 
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -69,6 +69,9 @@ urlpatterns = [
      
      # address url
       path('get_address/', AddressDetailView.as_view(), name='address-detail'),
+      
+      # appliedfreelancers
+      path('applied/freelancers/<int:id>/', AppliedFreelancersVeiw.as_view(), name='applied_freelancers'),
 ] 
 
 urlpatterns = format_suffix_patterns(urlpatterns)

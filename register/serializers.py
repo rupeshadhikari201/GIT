@@ -208,6 +208,7 @@ class FreelancerDetailsSerializer(serializers.ModelSerializer):
     
     # skills = serializers.ListField(child=serializers.CharField())
     # languages = serializers.ListField(child=serializers.CharField())
+    user= UserRegistrationSerializer(read_only=True)
     
     class Meta:
         model = Freelancer
@@ -450,7 +451,11 @@ class AddressSerializer(serializers.ModelSerializer):
         model = Address
         fields = '__all__'
 
-        
-    
+class AppliedFreelancerSerializer(serializers.ModelSerializer):
+    frelancer_id = FreelancerDetailsSerializer()
+    class Meta:
+        model = ApplyProject
+        fields = '__all__'      
+ 
 
     

@@ -3,6 +3,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from jsonschema import ValidationError
 
+
 class UserManager(BaseUserManager):
     
     def create_user(self, firstname, lastname, email, password=None, cnfpassword=None,user_type=None):
@@ -180,8 +181,8 @@ class Projects(models.Model):
     updated_at = models.DateTimeField(auto_now = True)
     
     def __str__(self):
-        return self.title
-
+        return str(self.id)
+    
 class Payment(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_status = models.ForeignKey(PaymentStatus, on_delete=models.SET_NULL, null=True, blank=True)
@@ -220,6 +221,9 @@ class ApplyProject(models.Model):
     applied_at = models.DateTimeField(auto_now_add=True)
     proposal = models.TextField(blank=False)
     status = models.CharField(max_length=2, choices=STATUS_CHOICES, default='PA')
+    
+    def __str__(self):
+        return f'Project id : {self.project_id}'
     
     
 # Model to store project screenshot

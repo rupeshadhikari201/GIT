@@ -9,7 +9,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.generics import  ListCreateAPIView
-from register.serializers import AddressSerializer, ApplyProjectAndProjectSerializer, ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, FreelancerDetailsSerializer, FreelancerUpdateSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, PaymentStatusSerializer, ProjectAssignSerializer, ProjectCreationSerializer, ProjectFileSerializer, ProjectStatusSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer
+from register.serializers import AddressSerializer, ApplyProjectAndProjectSerializer, ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, FreelancerDetailsSerializer, FreelancerUpdateSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, PaymentStatusSerializer, ProjectAssignSerializer, ProjectCreationSerializer, ProjectFileSerializer, ProjectStatusSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer,AppliedFreelancerSerializer
 from django.contrib.auth import authenticate, login, logout
 from register.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
@@ -23,6 +23,7 @@ from register.models import User, Projects
 from django.utils import timezone
 import logging
 import os
+from django.utils.functional import empty
 from django.db.models import Q
 
 
@@ -834,7 +835,12 @@ class AddressDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request):
-        address = request.user.address
+        address = None
+        try:
+            address = request.user.address if request.user.address is not empty else None 
+        except Exception as e:
+            return Response({"error" :  "The user has no address"},status=status.HTTP_404_NOT_FOUND)
+        
         serializer = AddressSerializer(address, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -842,11 +848,59 @@ class AddressDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request):
-        print("user is : ", request.user)
-        print("address is : ", request.user.address)
+    
         try: 
             address = request.user.address
             address.delete()
+            print("user is : ", request.user)
+            print("address is : ", request.user.address)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"msg": "Address deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+# GET applied freelancers Freelancer details for any project_id
+class AppliedFreelancersVeiw(APIView):
+    
+    def get(self,request,id):
+        # get freelancers detail for specific project
+        try:
+            project_id = id
+            # applied_project = ApplyProject.objects.filter(project_id=project_id)
+            # print("applied_projcts", applied_project)
+            applied_project_freelancer  = ApplyProject.objects.filter(project_id=project_id).select_related('frelancer_id')
+            for i in applied_project_freelancer:
+                
+                print(i.frelancer_id.pk)
+                
+            applied_serialized = AppliedFreelancerSerializer(applied_project_freelancer,many=True)
+            #Get freelancer id from the project
+            # freelancers_ids = applied_project.values_list("frelancer_id",flat=True)
+            # # print("applied freelancer Id ",freelancers_ids)
+            # #Get detail for all freelancers 
+            # freelancers_details = Freelancer.objects.filter(pk__in=freelancers_ids)
+            # user_id = freelancers_details.values_list('user', flat=True)
+            # print(type(freelancers_details))
+            # print(freelancers_details)
+            # print("Detail is",freelancers_details)
+            # frelancer_user_ids = list(freelancers_details.values('user'))
+            # print("frelancer user ids : ", frelancer_user_ids)   
+            # print("frelancer user ids : ", type(frelancer_user_ids)) 
+            # user_id = []
+            # for user in frelancer_user_ids:
+            #     # print('user is : ',  user['user'])
+            #     user_id.append(user['user'])
+                
+            # print(user_id, ' : user id ')   
+            # users = User.objects.filter(pk__in=user_id) 
+            # print("users are : " ,users)
+            # print(user.values())
+            # print(user.get('user'))
+            # print(user.get('firstname'))
+            # user_serializer = UserRegistrationSerializer(users, many=True)
+            # print("s datat " , user_serializer.data)
+            
+            # serialized = FreelancerDetailsSerializer(freelancers_details,many=True)
+            # # serialized['user_details '] = user_serializer.data
+            return Response({"serialized_data":applied_serialized.data})
+        except Exception as e :
+            return Response({"error":f"{e}"},status=status.HTTP_400_BAD_REQUEST)
