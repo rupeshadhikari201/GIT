@@ -821,9 +821,12 @@ class AddressDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        address = request.user.address
-        serializer = AddressSerializer(address)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            address = request.user.address
+            serializer = AddressSerializer(address)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e: 
+            return Response({'error' : str(e)})
     
     def post(self, request):
         data = request.data
@@ -867,12 +870,16 @@ class AppliedFreelancersVeiw(APIView):
             project_id = id
             # applied_project = ApplyProject.objects.filter(project_id=project_id)
             # print("applied_projcts", applied_project)
+            freelancer_data = []
             applied_project_freelancer  = ApplyProject.objects.filter(project_id=project_id).select_related('frelancer_id')
-            for i in applied_project_freelancer:
+            for application in applied_project_freelancer:
+                freelancer = application.frelancer_id
+                freelancer_data.append({
+                    'freelancer_id': freelancer.pk,
+                    'details': AppliedFreelancerSerializer(application).data
+                })
                 
-                print(i.frelancer_id.pk)
-                
-            applied_serialized = AppliedFreelancerSerializer(applied_project_freelancer,many=True)
+            # applied_serialized = AppliedFreelancerSerializer(applied_project_freelancer,many=True)
             #Get freelancer id from the project
             # freelancers_ids = applied_project.values_list("frelancer_id",flat=True)
             # # print("applied freelancer Id ",freelancers_ids)
@@ -901,6 +908,37 @@ class AppliedFreelancersVeiw(APIView):
             
             # serialized = FreelancerDetailsSerializer(freelancers_details,many=True)
             # # serialized['user_details '] = user_serializer.data
-            return Response({"serialized_data":applied_serialized.data})
+            return Response({"freelancers": freelancer_data}, status=status.HTTP_200_OK)
         except Exception as e :
             return Response({"error":f"{e}"},status=status.HTTP_400_BAD_REQUEST)
+        
+# api that return's clients project details by that client id
+class GetClientsProjectsDetailsByCliendId(APIView):
+    
+    renderer_classes = [UserRenderer]
+    # permission_classes = [IsAuthenticated]
+    
+    def get(self,request,client_id):
+        queryset = Projects.objects.filter(client_id=client_id)
+        print(queryset)
+        print(queryset.all)
+        print(queryset.values())
+        print(queryset.values_list())
+        serialized = ProjectCreationSerializer(queryset, many=True)
+        return Response({"data":serialized.data})
+
+# get all the project assigned to a frelancer using the frelancer id
+class GetAssignedProjectUsingFrelancerID(APIView):
+    renderer_classes = [UserRenderer]
+    # permission_classes = [IsAuthenticated]
+    
+    def get(sef,request, frelancer_id):
+        project_ids_queryset = ProjectsAssigned.objects.filter(frelancer_id=frelancer_id)
+        print(project_ids_queryset.values())
+        project_id_list = []
+        for i in project_ids_queryset:
+            project_id_list.append(i.project_id_id)
+        print("the list of ids of assigned project is : ", project_id_list)
+        project_queryset = Projects.objects.filter(id__in=project_id_list)
+        serialized = ProjectCreationSerializer(project_queryset, many=True)
+        return Response({"data":serialized.data}, status=status.HTTP_201_CREATED)

@@ -65,13 +65,13 @@ MIDDLEWARE = [
 ]
 
 # "*"  # Allow all origins (not recommended for production)
-# CORS_ALLOWED_ORIGINS = [
-#     "https://rupeshadhikari201.github.io",  
-#     "http://localhost:5173",
-#     "http://localhost:8000",
-#     "http://127.0.0.1:8000",
-# ]
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://rupeshadhikari201.github.io",  
+    "http://localhost:5173",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+# CORS_ALLOW_ALL_ORIGINS = True
 
 # Rest Framework
 REST_FRAMEWORK = {
@@ -112,14 +112,14 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 database_url = os.getenv('DATABASE_URL')
 DATABASES = {
-    # "default": {
-    #     "ENGINE": "django.db.backends.postgresql",
-    #     "NAME": "postgres1",
-    #     "USER": "postgres",
-    #     "HOST": "localhost",
-    #     "PORT": '5432',
-    #     "PASSWORD": 12345
-    # },
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "postgres1",
+        "USER": "postgres",
+        "HOST": "localhost",
+        "PORT": '5432',
+        "PASSWORD": 12345
+    },
     # 'default': dj_database_url.config(
     #     # Replace this value with your local database's connection string.
     #     # default="postgres://rupesh:G9CkZVNuCB1yOwtNvq78oTFS46Xvtr23@dpg-cn8popgl5elc738utv70-a.oregon-postgres.render.com/users_5b7j",
@@ -137,12 +137,12 @@ DATABASES = {
     #   'sslmode': 'require',
     # },
     # }
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        conn_health_checks=True,
-        # ssl_require=True,
-    )
+    # 'default': dj_database_url.config(
+    #     default=os.environ.get('DATABASE_URL'),
+    #     conn_max_age=600,
+    #     conn_health_checks=True,
+    #     # ssl_require=True,
+    # )
 }
 
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")

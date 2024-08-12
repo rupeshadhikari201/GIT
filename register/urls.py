@@ -1,5 +1,5 @@
 from django.urls import path, include
-from register.views import AddressDetailView, DeleteUnassignedProject, FreelancerSearchView, GetAppliedProject, GetClientDetailsById, GetClientProjects, GetProjectDetailsByIdView, LogoutView, PaymentStatusView, PriceFilterView, ProjectAssignView, ProjectFileView, ProjectStatusView, UpdateFreelancerView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView, ProjectSearchView, AppliedFreelancersVeiw
+from register.views import AddressDetailView, DeleteUnassignedProject, FreelancerSearchView, GetAppliedProject, GetAssignedProjectUsingFrelancerID, GetClientDetailsById, GetClientProjects, GetClientsProjectsDetailsByCliendId, GetProjectDetailsByIdView, LogoutView, PaymentStatusView, PriceFilterView, ProjectAssignView, ProjectFileView, ProjectStatusView, UpdateFreelancerView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView, ProjectSearchView, AppliedFreelancersVeiw
 # from register.views import logout_view
 
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -46,8 +46,10 @@ urlpatterns = [
      
      path('get-client-project/', GetClientProjects.as_view(), name='get-client-project'),
      path('get-client/project/<int:project_id>/',GetProjectDetailsByIdView.as_view(),name="get_project_detail"),
+     path('get_projects_by_client_id/<int:client_id>/', GetClientsProjectsDetailsByCliendId.as_view()),
      path('apply_project/', ApplyProjectView.as_view(), name='apply_project'),
      path('assign-projects/', ProjectAssignView.as_view(), name='assign-projects'),
+     path('get_addigned_project_using_frelancer_id/<int:frelancer_id>/', GetAssignedProjectUsingFrelancerID.as_view()),
      path('project/<int:project_id>/files/', ProjectFileView.as_view(), name='project_files'),
      path('get_applied_project/',GetAppliedProject.as_view(), name='get_applied_project'),
      
