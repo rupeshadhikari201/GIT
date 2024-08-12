@@ -942,3 +942,26 @@ class GetAssignedProjectUsingFrelancerID(APIView):
         project_queryset = Projects.objects.filter(id__in=project_id_list)
         serialized = ProjectCreationSerializer(project_queryset, many=True)
         return Response({"data":serialized.data}, status=status.HTTP_201_CREATED)
+    
+# get user detail of client
+class GetDetailsOfClient(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        clients_queryset = User.objects.filter(user_type="client")
+        serialized = UserRegistrationSerializer(clients_queryset, many=True)
+        return Response({"data": serialized.data}, status=status.HTTP_200_OK)
+    
+    
+# get user detail of frelancers
+class GetDetailsOfFrelancers(APIView):
+    
+    renderer_classes = [UserRenderer]
+    # permission_classes = [IsAuthenticated] 
+    
+    def get(self,request):
+        frelancers_queryset = User.objects.filter(user_type="freelancer")
+        serialized = UserRegistrationSerializer(frelancers_queryset, many=True)
+        return Response({"data": serialized.data}, status=status.HTTP_200_OK)
+    

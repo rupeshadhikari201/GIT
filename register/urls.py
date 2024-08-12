@@ -1,5 +1,5 @@
 from django.urls import path, include
-from register.views import AddressDetailView, DeleteUnassignedProject, FreelancerSearchView, GetAppliedProject, GetAssignedProjectUsingFrelancerID, GetClientDetailsById, GetClientProjects, GetClientsProjectsDetailsByCliendId, GetProjectDetailsByIdView, LogoutView, PaymentStatusView, PriceFilterView, ProjectAssignView, ProjectFileView, ProjectStatusView, UpdateFreelancerView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView, ProjectSearchView, AppliedFreelancersVeiw
+from register.views import AddressDetailView, DeleteUnassignedProject, FreelancerSearchView, GetAppliedProject, GetAssignedProjectUsingFrelancerID, GetClientDetailsById, GetClientProjects, GetClientsProjectsDetailsByCliendId, GetDetailsOfClient, GetDetailsOfFrelancers, GetProjectDetailsByIdView, LogoutView, PaymentStatusView, PriceFilterView, ProjectAssignView, ProjectFileView, ProjectStatusView, UpdateFreelancerView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView, SendPasswordResetEmailView, FreelancerCreationView, ClientCreationView, ProjectCreationView, SendUserVerificationLinkView, VerifyUserEmailView, ProjectUpdateView, GetUnassingedProjects, ApplyProjectView, FreelancerDetails, UpdateUserView, ProjectSearchView, AppliedFreelancersVeiw
 # from register.views import logout_view
 
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -39,6 +39,8 @@ urlpatterns = [
      path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
      
      path('get-user/', views.GetUserView.as_view(), name='get_user_list'),
+     path("get_client_details/", GetDetailsOfClient.as_view()),
+     path("get_frelancers_details/", GetDetailsOfFrelancers.as_view()),
      path('get-user/<int:pk>/', views.GetUserView.as_view(), name='get_user_details'),
      path('update-user/', views.UpdateUserView.as_view(), name='update_user_details'),
      path('delete-user/<int:pk>/', views.GetUserView.as_view(), name='delete_user'),
