@@ -107,10 +107,7 @@ class Freelancer(models.Model):
     where_did_you_heard = models.CharField(max_length=10, choices=WHERE_DID_YOU_HEARD)
     resume = models.FileField(upload_to='resumes/', blank=True, null=True)
     bio = models.TextField()
-    # project_completed = models.PositiveBigIntegerField(default=0)
-    # level = models.ForeignKey(4wzxcvbgnhjmko,p[l.]'
-    # FreelancerLevel, on_delete=models.CASCADE, default=LEVEL_CHOICES.BE)
-    # level = models.CharField(max_length=2, choices=)
+
     def __str__(self):
         return str(self.user)
 
