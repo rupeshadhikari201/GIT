@@ -9,7 +9,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.generics import  ListCreateAPIView
-from register.serializers import AddressSerializer, ApplyProjectAndProjectSerializer, ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, FreelancerDetailsSerializer, FreelancerUpdateSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, PaymentStatusSerializer, ProjectAssignSerializer, ProjectCreationSerializer, ProjectFileSerializer, ProjectStatusSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer,AppliedFreelancerSerializer
+from register.serializers import AddressSerializer, ApplyProjectAndProjectSerializer, ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, FreelancerDetailsSerializer, FreelancerUpdateSerializer, GetClientProjectsSerializer, GetDetailsOfFrelancersSerializer, GetUnassingedProjectSerializer, GetUserSerializer, PaymentStatusSerializer, ProjectAssignSerializer, ProjectCreationSerializer, ProjectFileSerializer, ProjectStatusSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer,AppliedFreelancerSerializer
 from django.contrib.auth import authenticate, login, logout
 from register.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
@@ -879,35 +879,6 @@ class AppliedFreelancersVeiw(APIView):
                     'details': AppliedFreelancerSerializer(application).data
                 })
                 
-            # applied_serialized = AppliedFreelancerSerializer(applied_project_freelancer,many=True)
-            #Get freelancer id from the project
-            # freelancers_ids = applied_project.values_list("frelancer_id",flat=True)
-            # # print("applied freelancer Id ",freelancers_ids)
-            # #Get detail for all freelancers 
-            # freelancers_details = Freelancer.objects.filter(pk__in=freelancers_ids)
-            # user_id = freelancers_details.values_list('user', flat=True)
-            # print(type(freelancers_details))
-            # print(freelancers_details)
-            # print("Detail is",freelancers_details)
-            # frelancer_user_ids = list(freelancers_details.values('user'))
-            # print("frelancer user ids : ", frelancer_user_ids)   
-            # print("frelancer user ids : ", type(frelancer_user_ids)) 
-            # user_id = []
-            # for user in frelancer_user_ids:
-            #     # print('user is : ',  user['user'])
-            #     user_id.append(user['user'])
-                
-            # print(user_id, ' : user id ')   
-            # users = User.objects.filter(pk__in=user_id) 
-            # print("users are : " ,users)
-            # print(user.values())
-            # print(user.get('user'))
-            # print(user.get('firstname'))
-            # user_serializer = UserRegistrationSerializer(users, many=True)
-            # print("s datat " , user_serializer.data)
-            
-            # serialized = FreelancerDetailsSerializer(freelancers_details,many=True)
-            # # serialized['user_details '] = user_serializer.data
             return Response({"freelancers": freelancer_data}, status=status.HTTP_200_OK)
         except Exception as e :
             return Response({"error":f"{e}"},status=status.HTTP_400_BAD_REQUEST)
@@ -950,18 +921,18 @@ class GetDetailsOfClient(APIView):
     
     def get(self, request):
         clients_queryset = User.objects.filter(user_type="client")
-        serialized = UserRegistrationSerializer(clients_queryset, many=True)
+        serialized = GetDetailsOfFrelancersSerializer(clients_queryset, many=True)
         return Response({"data": serialized.data}, status=status.HTTP_200_OK)
     
     
-# get user detail of frelancers
+# get all the details of all the frelancers
 class GetDetailsOfFrelancers(APIView):
     
     renderer_classes = [UserRenderer]
-    # permission_classes = [IsAuthenticated] 
+    permission_classes = [IsAuthenticated] 
     
     def get(self,request):
         frelancers_queryset = User.objects.filter(user_type="freelancer")
-        serialized = UserRegistrationSerializer(frelancers_queryset, many=True)
+        serialized = GetDetailsOfFrelancersSerializer(frelancers_queryset, many=True)
         return Response({"data": serialized.data}, status=status.HTTP_200_OK)
     

@@ -458,4 +458,9 @@ class AppliedFreelancerSerializer(serializers.ModelSerializer):
         fields = '__all__'      
  
 
-    
+# get all Frelancers Serializer 
+class GetDetailsOfFrelancersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        exclude = ['password']
+        
