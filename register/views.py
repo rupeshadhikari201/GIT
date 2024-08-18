@@ -5,21 +5,21 @@ from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics
-from rest_framework.generics import GenericAPIView
-from rest_framework import viewsets
 from rest_framework.views import APIView
-from rest_framework.generics import  ListCreateAPIView
-from register.serializers import AddressSerializer, ApplyProjectAndProjectSerializer, ApplyProjectSerializer, ChangePasswordSerializer, ClientCreationSerializer, FreelancerDetailsSerializer, FreelancerUpdateSerializer, GetClientProjectsSerializer, GetUnassingedProjectSerializer, GetUserSerializer, PaymentStatusSerializer, ProjectAssignSerializer, ProjectCreationSerializer, ProjectFileSerializer, ProjectStatusSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer, FreelancerCreationSerializer, VerifyUserEmailSerializer,AppliedFreelancerSerializer
+from project.models import ProjectStatus
+from project.serializer import ProjectStatusSerializer
+from client.models import Client
+from register.serializers import AddressSerializer,ChangePasswordSerializer,  FreelancerUpdateSerializer,  GetUserSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserLoginSerializer, UserProfileSerializer,  VerifyUserEmailSerializer
+from common.serializer import UserRegistrationSerializer
 from django.contrib.auth import authenticate, login, logout
 from register.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import IsAuthenticated
-from register.models import  ApplyProject, Client, Freelancer, PaymentStatus, ProjectFile, ProjectStatus, ProjectsAssigned
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.encoding import smart_str
 from django.utils.http import urlsafe_base64_decode
-from register.models import User, Projects
+from register.models import User
 from django.utils import timezone
 import logging
 import os
@@ -128,7 +128,7 @@ class SendPasswordResetEmailView(APIView):
     def post(self, request, format=None):
         serializer = SendPasswordResetEmailSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            return Response({"msg" : "Password Reset Link was sent to your provided Email. Please Check your Email. 😊"}, status.HTTP_200_OK)
+            return Response({"msg" : "Password Reset Link was sent to your provided Email. Please Check your Email."}, status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class UserPasswordUpdateView(APIView):
@@ -160,147 +160,10 @@ class UserPasswordUpdateView(APIView):
             return Response({"msg " : "Password is Updated in the Database. 😊"}, status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
-# It is a class-based view that allows you to define the behavior and logic for handling different HTTP methods (GET, POST, PUT, PATCH, DELETE, etc.) in your API.
-class FreelancerCreationView(APIView):
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    
-    def post(self, request, format=None):
-        
-        # Print the user that comes with the request as token
-        print("user", request.user)
-        print("user", request.user.id)
-        # Print the data that comes with the request from the form 
-        print("data", request.data)
-        
-        # Along with the request comes the user(there is permission_classes) and the data 
-        '''
-        The issue you're facing is likely due to the fact that request.data is an immutable QueryDict object when dealing with form data. To modify it, you need to convert it to a mutable dictionary first.
-        '''
-        data = request.data.copy()
-        user = request.user.id
-        data['user'] = user
-        print("the final data is : ", data)
-        
-        # This line creates an instance of the FreelancerSerializer class. 
-        # It takes the request.data as the data to be serialized.
-        serialized = FreelancerCreationSerializer(data=data)
-        
-        # This line checks whether the data provided to the serializer is valid according to the serializer's validation rules. The is_valid() method is a DRF method that triggers the validation process.
-        if serialized.is_valid():
-            # If the data is valid, this line saves the data to the database.
-            serialized.save()
-            return Response({"msg": "Freelancer Created", "serialized_data": serialized.data}, status=status.HTTP_201_CREATED)
-        return Response({"msg": "Freelancer isn't created","serialized_errors" : serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
-    # get all the frelancers
-    def get(self, request):
-     
-        # Get the queryset 
-        freelancers = Freelancer.objects.all()
-        
-        # The many parameter is a boolean flag used to indicate whether the serializer should be used to serialize a single instance (many=False) or multiple instances (many=True)
-        serialized = FreelancerCreationSerializer(freelancers, many=True)
-        
-        return Response({'serialized_data': serialized.data})
-        
-# Get Freelancer by Id
-class FreelancerDetails(APIView):
-    
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    
-    def get(self, request):   
-      user  = request.user
-      
-      try:
-          freelancer_details= Freelancer.objects.get(user=user.id)
-      except Freelancer.DoesNotExist:
-          return Response({'error': 'Freelancer not found'}, status=status.HTTP_404_NOT_FOUND)
-
-      serialized= FreelancerDetailsSerializer(freelancer_details)
-      return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
-
            
-class ClientCreationView(APIView):
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    
-    def post(self, request, *args, **kwargs):
-        serialized = ClientCreationSerializer(data=request.data, context={'request': request})
-        if serialized.is_valid():
-            # Get or create a client instance
-            client_instance, created = Client.objects.get_or_create(user=request.user)
-            print("client_instance", client_instance)
-            print("instance", created)
-            
-            # Associate the project with the client
-            serialized.save(client=client_instance)
-            
-            return Response({"msg":"Client Created!", "details": serialized.data}, status=status.HTTP_201_CREATED)
-        return Response({'msg': "Client can't be created 🙏🏿", "errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
-    def get(self,request, *args, **kwargs):
-        
-        clients = Client.objects.all()
-        serialized = ClientCreationSerializer(clients, many=True)
-        return Response({'data': serialized.data})
         
         
-class ProjectCreationView(APIView):
-    
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    
-    def post(self,request,*args, **kwargs):
-        data = request.data
-        data['client'] = request.user.id
-        print(data)
-        serialized = ProjectCreationSerializer(data=data)
-        if serialized.is_valid():
-            serialized.save()
-            return Response({"msg":"Project Created!", "details": serialized.data}, status=status.HTTP_201_CREATED)
-        return Response({'msg': "Project can't be created", "errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
-   
-class ProjectUpdateView(APIView):
-    
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    
-    # get object
-    def get_object(self, project_id):
-        try:    
-            return Projects.objects.get(pk=project_id)
-        except Projects.DoesNotExist:
-            return None
-        
-    
-    def put(self,request,project_id, *args, **kwargs):
-        
-        # get object
-        project = self.get_object(project_id)
-        if project is None:
-            return Response({"msg": "Project is not found"}, status=status.HTTP_404_NOT_FOUND) 
-        
-        serialized = ProjectCreationSerializer(project, data=request.data)
-        if serialized.is_valid():
-            serialized.save()
-            return Response({"msg":"Project Updated!", "details": serialized.data}, status=status.HTTP_201_CREATED)
-        return Response({'msg': "Project can't be Updated 🙏🏿", "errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
-    
-    def patch(self, request, project_id, *args, **kwargs):
-        project = self.get_object(project_id)
-        if project is None:
-            return Response({'msg': "Project not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        serializer = ProjectCreationSerializer(project, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"msg": "Project Updated!", "details": serializer.data}, status=status.HTTP_200_OK)
-        return Response({'msg': "Project can't be Updated 🙏🏿", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class SendUserVerificationLinkView(APIView): 
     
@@ -351,11 +214,7 @@ class GetUserView(mixins.ListModelMixin,
     serializer_class = GetUserSerializer
     
     def get(self, request, *args, **kwargs):
-        print('the request is : ', request)
-        print('the args is : ', args)
-        print('the kwargs is : ', kwargs)
-        # print('the kwargs['pk'] is :', kwargs['pk'])
-        # print('the kwargs['int'] is :', kwargs['int'])
+        
         print('the pk is : ', kwargs.get('pk'))
         if 'pk' in kwargs:
             return self.retrieve(request, kwargs['pk'])
@@ -366,28 +225,14 @@ class GetUserView(mixins.ListModelMixin,
         return self.create(request,*args, **kwargs)
     
     
-    # def put(self, request, *args, **kwargs):
-    #     return self.put(request,*args, **kwargs)
-    
     def delete(self, request, *args, **kwargs):
-        print(f"the use {kwargs['pk']} is going to be deleted")
-        print(f"the use {kwargs.get('pk')} is going to be deleted")
+        print(f"the user {kwargs['pk']} is going to be deleted")
+        print(f"the user {kwargs.get('pk')} is going to be deleted")
         response =  super().destroy(request, *args, **kwargs)
         print("the response is : ", response)
         response.data['msg'] = "User Deletion Sucessfull"
         return Response({"msg":"User deleted success"},status=status.HTTP_200_OK)
     
-# class UpdateUserView(mixins.UpdateModelMixin, generics.GenericAPIView):
-
-#     renderer_classes = [UserRenderer]
-#     permission_classes = [IsAuthenticated]
-    
-#     queryset = User.objects.all()
-#     serializer_class = UpdateUserSerializer
-    
-#     def put(self, request):
-#         # print("put ", args)
-#         return self.update(request, pk=1)
 
 # Update User
 class UpdateUserView(APIView):
@@ -412,164 +257,7 @@ class UpdateUserView(APIView):
         
         return Response({'msg': 'User Update Sucessfull'}, status=status.HTTP_200_OK)
     
-# Get all the projecct of the specific client
-class GetClientProjects(APIView):
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    
-    def get(self, request):
-        
-        user = request.user
-        id = user.id
-        # get all the projects created by the user with given id. 
-        queryset = Projects.objects.filter(client_id=id)
-        serializer = GetClientProjectsSerializer(queryset, many=True)
 
-        return Response(serializer.data)
-    
-class ProjectAssignView(APIView):
-    
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    
-    def post(self, request):
-        serializer = ProjectAssignSerializer(data=request.data)
-        if serializer.is_valid():
-            
-            assigned = serializer.validated_data['assigned']
-            
-            if assigned:
-                # raise ValueError("Project is Already Assigned. ")
-                return Response({"error": "The Project is already assigned. "})
-            
-            frelancer_id = serializer.validated_data['frelancer_id']         
-            project_id = serializer.validated_data['project_id']  
-            print("the project id is : " , project_id)     
-            print("the project id is : " , project_id.id)    
-            print(type(project_id)) 
-            obj = ProjectsAssigned.objects.create(frelancer_id=frelancer_id, project_id=project_id)
-            project_data = ProjectAssignSerializer(obj)
-            if obj is None:
-                raise ValueError("Error Assigning Project")
-            else:
-                project = Projects.objects.get(id=project_id.id)
-                project.project_assigned_status = True
-                project.save()
-                return Response({'msg': "Project Assigned", 'data':project_data.data})
-        else:
-            return Response({'error':serializer.errors})
-        
-    
-    def delete(self, request):
-        
-        serializer = ProjectAssignSerializer(data=request.data)
-        if serializer.is_valid():
-            print("the delete serialiser is ", serializer.data)
-            project_id = serializer.data['project_id']
-            print(project_id, "this is project id ")
-            if ProjectsAssigned.objects.get(project_id=project_id).exists():
-            # if queryset.exists():
-            #     queryset.delete()
-                ProjectsAssigned.objects.get(project_id=project_id).delete()
-                return JsonResponse({'msg':"UnAssigned"}, status=201)
-            else:
-                return JsonResponse({'msg':"Already  deleted"}, status=400)
-        else:
-            return JsonResponse({"errors":  serializer.errors, 'msg':'project doesnt existes.'}, status=400)
-            
-
-# API to get the unassigned projects for freelancers
-class GetUnassingedProjects(APIView):
-    
-    renderer_classes = [UserRenderer]
-    
-    def get(self, request):
-        # Fetch all projects that are not assigned
-        unassigned_projects = Projects.objects.filter(project_assigned_status=False).order_by('-created_at')
-        serializer = GetUnassingedProjectSerializer(unassigned_projects, many=True)
-        return Response({'data': serializer.data, 'msg': "Unassigned Projects Retrieved Successfully"}, status=status.HTTP_200_OK)
-
-# Delete Project
-class DeleteUnassignedProject(APIView):
-    
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    
-    def delete(self, request, **kwargs):
-        
-        project_id = kwargs['project_id']
-        
-        # check if the project with the id exists
-        if Projects.objects.filter(id=project_id):
-        
-            project = Projects.objects.get(id = project_id)
-            if project.project_assigned_status == False:
-                delete_status = project.delete()
-                print("delete_status", delete_status)
-                return Response({"msg": "Project deleted sucessfully"}, status=status.HTTP_200_OK )
-        
-            return Response({"msg": "Project is Assigned"}, status=status.HTTP_400_BAD_REQUEST )  
-        else:
-            return Response({"msg": "Project Does Not Exists"}, status=status.HTTP_400_BAD_REQUEST )  
-
-# Logout View             
-# class LogoutView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request, format=None):
-#         try:
-#             refresh_token = request.data["refresh"]
-#             token = RefreshToken(refresh_token)
-#             token.blacklist()
-#             return Response({"msg": "Logout successful."}, status=status.HTTP_205_RESET_CONTENT)
-#         except Exception as e:
-#             return Response({"msg": request, "refresh": request.data['refresh'], "error": str(e),}, status=status.HTTP_400_BAD_REQUEST)
-   
-'''
-This logout view does the following:
-
-It uses the IsAuthenticated permission class to ensure only authenticated users can access this view.
-It expects a POST request with a "refresh_token" in the request data.
-It blacklists the refresh token to invalidate it, preventing its future use.
-It calls Django's logout() function to log out the user on the server side.
-It returns a success message if the logout is successful, or an error message if something goes wrong.
-'''
-# class LogoutView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request):
-#         try:
-#             refresh_token = request.data["refresh_token"]
-#             token = RefreshToken(refresh_token)
-#             token.blacklist()
-
-#             logout(request)
-
-#             return Response({"success": "User logged out successfully"}, status=status.HTTP_205_RESET_CONTENT)
-#         except Exception as e:
-#             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-# class LogoutView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request):
-#         try:
-#             auth_header = request.headers.get('Authorization')
-#             if not auth_header or not auth_header.startswith('Bearer '):
-#                 return Response({"error": "Invalid token format"}, status=status.HTTP_400_BAD_REQUEST)
-
-#             token = auth_header.split(' ')[1]
-#             AccessToken(token)  # This will raise an error if the token is invalid
-
-#             # Perform any additional logout actions here
-#             logout(request)
-
-#             return Response({"success": "User logged out successfully"}, status=status.HTTP_205_RESET_CONTENT)
-#         except TokenError as e:
-#             return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
-#         except Exception as e:
-#             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
@@ -594,227 +282,6 @@ class LogoutView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
-# Apply Projects
-class ApplyProjectView(APIView):
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    def post(self, request):
-        print("id", request.user.id)
-        data = request.data
-        data['frelancer_id'] = request.user.id
-        serializer = ApplyProjectSerializer(data= data)
-        print("data is",data)
-        project = Projects.objects.get(pk=data['project_id'])
-        if serializer.is_valid():
-            serializer.save()
-            project.applied_count += 1
-            project.save()
-            return Response({"msg": "Project Applied Sucess"}, status=status.HTTP_200_OK)
-        return Response({"errors": serializer.errors}, status=status.HTTP_404_NOT_FOUND)
-
-# the api to get all the applied projects of a particular freelancer based on their token
-class GetAppliedProject(APIView):
-    
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    
-    def get(self, request):
-        # 1. get the user 
-        user = request.user
-        
-        try:
-            freelancer = Freelancer.objects.get(user=user)
-            # get applied projects from the table of this user
-            # applied_projects = ApplyProject.objects.filter(frelancer_id=freelancer)
-            # applied_projects = ApplyProject.objects.select_related('project_id').all()
-            applied_projects = ApplyProject.objects.filter(frelancer_id=freelancer).select_related('project_id').all()
-            print(applied_projects.values_list())
-            try:
-                serialized = ApplyProjectAndProjectSerializer(applied_projects, many=True)
-                return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
-            except Exception as e: 
-                return Response({'error_message' : str(e)})
-        except Exception as e:
-            return Response({'error': str(e),}, status=status.HTTP_404_NOT_FOUND)
-    
-    
-# API's to populate ProjectStatus
-class ProjectStatusView(generics.ListCreateAPIView):
-    
-    queryset = ProjectStatus.objects.all()
-    serializer_class = ProjectStatusSerializer
-    
-# API's to populate ProjectStatus
-class PaymentStatusView(generics.ListCreateAPIView):
-    
-    queryset = PaymentStatus.objects.all()
-    serializer_class = PaymentStatusSerializer
-    
-    
-# API Database for holding project screenshots, doc and pdf files
-class ProjectFileView(APIView):
-    # permission_classes = [IsAuthenticated]
-
-    def get(self, request, project_id):
-        project_files = ProjectFile.objects.filter(project_id=project_id)
-        serializer = ProjectFileSerializer(project_files, many=True)
-        return Response({'data': serializer.data}, status=status.HTTP_200_OK)
-
-    def post(self, request, project_id):
-        data = request.data
-        data['project'] = project_id
-        serializer = ProjectFileSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'msg': 'File uploaded successfully'}, status=status.HTTP_201_CREATED)
-        return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
-
-# get the projects details by id
-class GetProjectDetailsByIdView(APIView):
-    renderer_classes = [UserRenderer]
-    permission_classes =  [ IsAuthenticated]
-    
-    def get(self, request,project_id):
-        projects = get_object_or_404(Projects,pk=project_id)
-        seralizer = ProjectCreationSerializer(projects)
-        
-        return Response({"serialized_data":seralizer.data})
-        
-# Update Freelancer View
-class UpdateFreelancerView(APIView):
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    
-    def put(self, request):
-        user = request.user
-        data = request.data
-        data['user'] = user.id
-        freelancer = Freelancer.objects.get(user=user.id)
-        queryset = FreelancerCreationSerializer(freelancer,data=data,partial=True)
-        print("queryset",queryset)
-        if queryset.is_valid():
-            queryset.save()
-            return Response({'msg':"success", 'data': queryset.data}, status=status.HTTP_200_OK)
-        return Response({'error': queryset.errors}, status=status.HTTP_400_BAD_REQUEST)  
-        
-    def patch(self, request):
-        pass
-
-# Get Clinet Details by Id
-class GetClientDetailsById(APIView):
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    
-    def get(self, request, client_id):
-        client = Client.objects.get(pk=client_id)
-        user = User.objects.get(pk= client.pk)
-        
-        print(user.firstname)
-        queryset = UserRegistrationSerializer(user)
-        return Response({'serialized_data': queryset.data})
-    
-# Search API based on Freelancer Skills
-class FreelancerSearchView(APIView):
-    
-    def get(self, request):
-        skills = request.query_params.get('skills', '').lower().split(',')
-        languages = request.query_params.get('languages', '').lower().split(',')
-        profession = request.query_params.get('profession', '').lower()
-
-        # Start with a base queryset
-        queryset = Freelancer.objects.all()
-        
-        # This checks if the skills list is not empty and not just a list with an empty string. It ensures we only apply the filter if actual skills were provided in the query.
-        if skills and skills != ['']:
-            # This initializes an empty Q object. Q objects in Django are used to build complex database queries.
-            skill_query = Q()
-            for skill in skills:
-                skill_query |= Q(skills__icontains=skill.strip())
-                # skills__icontains is a Django lookup that checks if the skills field contains the given value, case-insensitive.
-                # strip() removes any leading or trailing whitespace from the skill.
-                # The |= operator is used to combine this new condition with the existing skill_query using OR logic.
-            queryset = queryset.filter(skill_query)
-            
-            
-        if languages and  languages != ['']:
-            language_query = Q()
-            for language in languages:
-                language_query |= Q(languages__icontains=language.strip())
-            queryset = queryset.filter(language_query)
-            
-        if profession : 
-            queryset =  queryset.filter(profession__icontains=profession)
-            
-        # If no filters applied, return an error
-        if not (skills or languages or profession):
-            return Response({"error": "No search criteria provided"}, status=400)
-        
-        
-        # Create a Q object for each skill
-        # It uses __icontains for case-insensitive partial matching on all fields.
-        # query = Q()
-        # for skill in skills:
-        #     query |= Q(skills__icontains=skill)
-
-        print("Freelancer Queryset : ", queryset.query)
-        serializer = FreelancerCreationSerializer(queryset, many=True)
-        print("Serializer : ", serializer)
-        return Response(serializer.data)
-
-class PriceFilterView(APIView): 
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    
-    def get(self, request, price_start, price_end, n_applicant): 
-        
-        if(n_applicant < 0 and price_end > 0):
-             queryset = Projects.objects.filter(project_price__range=(price_start,price_end))
-             serialized = ProjectCreationSerializer(queryset, many=True)
-             return Response({'serialized_data': serialized.data}, status=status.HTTP_201_CREATED)
-        if(n_applicant >=0 and price_end > 0):
-             queryset = Projects.objects.filter(applied_count__range=(0,n_applicant)  ,project_price__range=(price_start,price_end))
-             serialized = ProjectCreationSerializer(queryset, many=True)
-             return Response({'serialized_data': serialized.data}, status=status.HTTP_201_CREATED)
-        if(price_end <= 0 and n_applicant >=0):
-             queryset = Projects.objects.filter(applied_count__range=(0,n_applicant))
-             serialized = ProjectCreationSerializer(queryset, many=True)
-             return Response({'serialized_data': serialized.data}, status=status.HTTP_201_CREATED)
-        if(price_end == 0 and n_applicant < 0):
-            return Response({"error":"Invalid filter"},status=status.HTTP_400_BAD_REQUEST)  
-            
-class ProjectSearchView(APIView):
-    renderer_classes = [UserRenderer]
-    # permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        title = request.query_params.get('title', None)
-        description = request.query_params.get('description', None)
-        min_price = request.query_params.get('min_price', None)
-        max_price = request.query_params.get('max_price', None)
-        min_applicants = request.query_params.get('min_applicants', None)
-        max_applicants = request.query_params.get('max_applicants', None)
-
-        queryset = Projects.objects.all()
-
-        if title:
-            queryset = queryset.filter(title__icontains=title)
-        if description:
-            queryset = queryset.filter(description__icontains=description)
-        if min_price:
-            queryset = queryset.filter(project_price__gte=min_price)
-        if max_price:
-            queryset = queryset.filter(project_price__lte=max_price)
-        if min_applicants:
-            queryset = queryset.filter(applied_count__gte=min_applicants)
-        if max_applicants:
-            queryset = queryset.filter(applied_count__lte=max_applicants)
-
-        if not (title or description or min_price or max_price or min_applicants or max_applicants):
-            return Response({"error": "No search criteria provided"}, status=400)
-
-        serialized = ProjectCreationSerializer(queryset, many=True)
-        return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
        
 # views for addresss
 class AddressDetailView(APIView):
@@ -861,107 +328,12 @@ class AddressDetailView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"msg": "Address deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-# GET applied freelancers Freelancer details for any project_id
-class AppliedFreelancersVeiw(APIView):
-    
-    def get(self,request,id):
-        # get freelancers detail for specific project
-        try:
-            project_id = id
-            # applied_project = ApplyProject.objects.filter(project_id=project_id)
-            # print("applied_projcts", applied_project)
-            freelancer_data = []
-            applied_project_freelancer  = ApplyProject.objects.filter(project_id=project_id).select_related('frelancer_id')
-            for application in applied_project_freelancer:
-                freelancer = application.frelancer_id
-                freelancer_data.append({
-                    'freelancer_id': freelancer.pk,
-                    'details': AppliedFreelancerSerializer(application).data
-                })
-                
-            # applied_serialized = AppliedFreelancerSerializer(applied_project_freelancer,many=True)
-            #Get freelancer id from the project
-            # freelancers_ids = applied_project.values_list("frelancer_id",flat=True)
-            # # print("applied freelancer Id ",freelancers_ids)
-            # #Get detail for all freelancers 
-            # freelancers_details = Freelancer.objects.filter(pk__in=freelancers_ids)
-            # user_id = freelancers_details.values_list('user', flat=True)
-            # print(type(freelancers_details))
-            # print(freelancers_details)
-            # print("Detail is",freelancers_details)
-            # frelancer_user_ids = list(freelancers_details.values('user'))
-            # print("frelancer user ids : ", frelancer_user_ids)   
-            # print("frelancer user ids : ", type(frelancer_user_ids)) 
-            # user_id = []
-            # for user in frelancer_user_ids:
-            #     # print('user is : ',  user['user'])
-            #     user_id.append(user['user'])
-                
-            # print(user_id, ' : user id ')   
-            # users = User.objects.filter(pk__in=user_id) 
-            # print("users are : " ,users)
-            # print(user.values())
-            # print(user.get('user'))
-            # print(user.get('firstname'))
-            # user_serializer = UserRegistrationSerializer(users, many=True)
-            # print("s datat " , user_serializer.data)
-            
-            # serialized = FreelancerDetailsSerializer(freelancers_details,many=True)
-            # # serialized['user_details '] = user_serializer.data
-            return Response({"freelancers": freelancer_data}, status=status.HTTP_200_OK)
-        except Exception as e :
-            return Response({"error":f"{e}"},status=status.HTTP_400_BAD_REQUEST)
-        
-# api that return's clients project details by that client id
-class GetClientsProjectsDetailsByCliendId(APIView):
-    
-    renderer_classes = [UserRenderer]
-    # permission_classes = [IsAuthenticated]
-    
-    def get(self,request,client_id):
-        queryset = Projects.objects.filter(client_id=client_id)
-        print(queryset)
-        print(queryset.all)
-        print(queryset.values())
-        print(queryset.values_list())
-        serialized = ProjectCreationSerializer(queryset, many=True)
-        return Response({"data":serialized.data})
 
-# get all the project assigned to a frelancer using the frelancer id
-class GetAssignedProjectUsingFrelancerID(APIView):
-    renderer_classes = [UserRenderer]
-    # permission_classes = [IsAuthenticated]
     
-    def get(sef,request, frelancer_id):
-        project_ids_queryset = ProjectsAssigned.objects.filter(frelancer_id=frelancer_id)
-        print(project_ids_queryset.values())
-        project_id_list = []
-        for i in project_ids_queryset:
-            project_id_list.append(i.project_id_id)
-        print("the list of ids of assigned project is : ", project_id_list)
-        project_queryset = Projects.objects.filter(id__in=project_id_list)
-        serialized = ProjectCreationSerializer(project_queryset, many=True)
-        return Response({"data":serialized.data}, status=status.HTTP_201_CREATED)
+
     
-# get user detail of client
-class GetDetailsOfClient(APIView):
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    
-    def get(self, request):
-        clients_queryset = User.objects.filter(user_type="client")
-        serialized = UserRegistrationSerializer(clients_queryset, many=True)
-        return Response({"data": serialized.data}, status=status.HTTP_200_OK)
+
     
     
-# get user detail of frelancers
-class GetDetailsOfFrelancers(APIView):
-    
-    renderer_classes = [UserRenderer]
-    # permission_classes = [IsAuthenticated] 
-    
-    def get(self,request):
-        frelancers_queryset = User.objects.filter(user_type="freelancer")
-        serialized = UserRegistrationSerializer(frelancers_queryset, many=True)
-        return Response({"data": serialized.data}, status=status.HTTP_200_OK)
+
     

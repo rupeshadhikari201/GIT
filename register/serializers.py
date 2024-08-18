@@ -5,36 +5,38 @@ from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeErr
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework import serializers
-from register.models import ApplyProject, Client, Notification, PaymentStatus, ProjectFile, ProjectStatus, Projects, User, Freelancer, ProjectsAssigned, Address
+from freelancer.serializer import FreelancerDetailsSerializer
+from payment.models import PaymentStatus
+from project.models import ApplyProject, ProjectFile
+from freelancer.models import Freelancer
+from register.models import  Notification, User, Address
 from register.utils import Util
 from django.core.mail import send_mail
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404
 import os
 
-
-
-class UserRegistrationSerializer(serializers.ModelSerializer):
-    cnfpassword = serializers.CharField(style={'input_type' : 'password'},write_only=True)
-    class Meta:
-        model = User
-        fields = ['firstname','lastname','email','password', 'cnfpassword',"user_type", "id"]
-        extra_kwargs = {
-            'password' : {'write_only': True}
-        }
+# class UserRegistrationSerializer(serializers.ModelSerializer):
+#     cnfpassword = serializers.CharField(style={'input_type' : 'password'},write_only=True)
+#     class Meta:
+#         model = User
+#         fields = ['firstname','lastname','email','password', 'cnfpassword',"user_type", "id"]
+#         extra_kwargs = {
+#             'password' : {'write_only': True}
+#         }
         
-    # Validate Password and cnfpassword
-    def validate(self, attrs):
-        password = attrs.get('password')
-        cnfpassword = attrs.get('cnfpassword')
-        if password != cnfpassword:
-            raise serializers.ValidationError("Password and Confirm password must be same!!!!😂")
-        return attrs
+#     # Validate Password and cnfpassword
+#     def validate(self, attrs):
+#         password = attrs.get('password')
+#         cnfpassword = attrs.get('cnfpassword')
+#         if password != cnfpassword:
+#             raise serializers.ValidationError("Password and Confirm password must be same!")
+#         return attrs
     
-    # Create Method
-    def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
-    
+#     # Create Method
+#     def create(self, validated_data):
+#         return User.objects.create_user(**validated_data)
+
 class UserLoginSerializer(serializers.ModelSerializer):
     email = serializers.CharField(max_length=255)
     
@@ -117,7 +119,7 @@ class SendPasswordResetEmailSerializer(serializers.ModelSerializer):
             send_mail(subject,body,send_from,send_to)
             return attrs
         else: 
-            raise serializers.ValidationError("The email is not Registered. Please register Yourself.😡😡😡")
+            raise serializers.ValidationError("The email is not Registered. Please register Yourself.")
         
 class UserPasswordUpdateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=255, style={'input_type=': 'password'}, write_only=True)
@@ -133,7 +135,7 @@ class UserPasswordUpdateSerializer(serializers.ModelSerializer):
         uid = self.context.get('id')
         token = self.context.get('token')
         if password!=cnfpassword:
-            raise serializers.ValidationError(" Password and Confirm password are not same. Password can't be updated. 🤐🤐🤐")
+            raise serializers.ValidationError(" Password and Confirm password are not same. Password can't be updated.")
         else:
             # 1. get the id and decode it to sting
             uid = smart_str(urlsafe_base64_decode(uid))
@@ -153,132 +155,11 @@ class UserPasswordUpdateSerializer(serializers.ModelSerializer):
         return attrs
     
 
-class FreelancerCreationSerializer(serializers.ModelSerializer):
-    
-    skills = serializers.ListField(child=serializers.CharField())
-    languages = serializers.ListField(child=serializers.CharField())
-    
-    class Meta:
-        model = Freelancer
-        fields = ['user', 'profession', 'skills','languages', 'reason_to_join','where_did_you_heard', 'resume','bio']
-    
-    '''
-    The "to_internal_value" method is part of Django REST framework's serializer validation process. It is responsible for converting the incoming primitive data types (typically JSON) into native Python data types and validating them. This method is usually overridden to perform custom deserialization and validation.
-    '''
-    def to_internal_value(self, data):
-        if 'skills' in data and isinstance(data['skills'], str):
-            data['skills'] = data['skills'].strip('][').split(', ')
-            
-        if 'languages' in data and isinstance(data['languages'], str):
-            data['languages'] = data['languages'].strip('][').split(', ')
-        
-        # After converting the skills and languages fields to lists, the method calls super().to_internal_value(data) to leverage the default behavior provided by ModelSerializer. 
-        return super().to_internal_value(data)
-    
-    '''
-    The validate method in a Django REST framework serializer is used to provide custom validation logic. The commented-out validate method you provided attempts to process the skills attribute, but it has some issues.
-    '''
-    def validate(self, attrs):
-        # retrive the skills attribute from the attrs dictionary, which contains all the validated data
-        skills = attrs.get('skills')
-        
-        # check if the skills is an instance of string
-        if isinstance(skills, str):
-            
-            # The ast.literal_eval function safely evaluates a string containing a Python literal or container display (like a list, dictionary, or string) and converts it into an actual Python object. This line assumes that skils is a string representation of a list and attempts to convert it into a Python list.
-            try:
-                skills_list = ast.literal_eval(skills)
-                
-                if not isinstance(skills_list, list):
-                    raise ValueError
-            
-            except (ValueError,SyntaxError):
-                raise serializers.ValidationError({'skills': 'Invalid format for skills. Must be a list or a string representation of a list.'})
-            
-            attrs['skills'] = skills_list
-            
-        return attrs
-    
 class FreelancerUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Freelancer
         fields = '__all__'
         
-class FreelancerDetailsSerializer(serializers.ModelSerializer):
-    
-    # skills = serializers.ListField(child=serializers.CharField())
-    # languages = serializers.ListField(child=serializers.CharField())
-    user= UserRegistrationSerializer(read_only=True)
-    
-    class Meta:
-        model = Freelancer
-        # fields = ['user', 'profession', 'skills','languages', 'reason_to_join','where_did_you_heard', 'resume','bio']
-        fields = '__all__'
-  
-
-
-class ClientCreationSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Client
-        fields = ['user']
-
-    def validate_user(self, value):
-        print("the value is : ", value)
-        return value
-
-    def create(self, validated_data):
-        user_id = validated_data.pop('user')
-        user = User.objects.get(id=user_id)
-        client = Client.objects.create(user=user, **validated_data)
-        return client
-   
-# class ClientCreationSerializer(serializers.ModelSerializer):
-#     # user = User()?
-    
-#     class Meta:
-#         model = Client
-#         fields = ['user','projects_uploaded'] 
-        
-#     # def create(self, validated_data):
-#     #     user_data = validated_data.pop('user')
-#     #     user = User.objects.create(**user_data)
-#     #     client = Client.objects.create(user=user, **validated_data)
-#     #     return client
-    
-#     # def validate_user(self, value):
-#     #     if not value.exists():
-#     #         raise serializers.ValidationError("Invalid user ID. User does not exist.")
-#     #     return value
-    
-#     # def validate_user(self, value):
-#     #     try:
-#     #         user = User.objects.get(pk=value)
-#     #     except User.DoesNotExist:
-#     #         raise serializers.ValidationError("Invalid user ID. User does not exist.")
-#     #     return value
-    
-#     # Validate that the provided user object has a valid ID
-#     # def validate_user(self, value):
-#     #     if not isinstance(value, int):
-#     #         raise serializers.ValidationError("Invalid user ID format.")
-#     #     return value
-    
-#     def validate_user(self, value):
-#         try:
-#             # user_id = int(value)
-#             user = User.objects.get(id=value)
-#             print('kye the user is ', user)
-#             return user
-#         except (ValueError, User.DoesNotExist):
-#             raise serializers.ValidationError("Invalid user ID format.")
-        
-class ProjectCreationSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = Projects
-        # fields = ['id','project_category', 'title','description', 'project_price', 'project_deadline','skills_required','client','applied_count']
-        fields = '__all__'
         
 class SendUserVerificationSerializer(serializers.ModelSerializer):
     
@@ -318,7 +199,7 @@ class SendUserVerificationSerializer(serializers.ModelSerializer):
             send_mail(subject,body,send_from,send_to)
             return attrs
         else: 
-            raise serializers.ValidationError("The email is not Registered. Please register Yourself.😡😡😡")
+            raise serializers.ValidationError("The email is not Registered. Please register Yourself.")
 
 class VerifyUserEmailSerializer(serializers.ModelSerializer):
     
@@ -373,72 +254,8 @@ class UpdateUserSerializer(serializers.ModelSerializer):
         model= User
         fields = ['firstname','lastname']
         
-        
-class ProjectAssignSerializer(serializers.ModelSerializer):
     
-    class Meta:
-        model = ProjectsAssigned
-        fields = ['frelancer_id','project_id',]
-        
-    def validate(self, attrs):
-        try:
-            project = get_object_or_404(ProjectsAssigned,project_id= attrs.get('project_id'))
-            
-            if project is not None:
-                attrs['assigned'] = True
-            return attrs
-        except:
-            attrs['assigned'] = False
-            return attrs
-      
-class GetClientProjectsSerializer(serializers.ModelSerializer):
     
-    class Meta:
-        model = Projects
-        fields = "__all__" 
-         
-class GetUnassingedProjectSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = Projects
-        fields= '__all__'
-    
-
-class ApplyProjectSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = ApplyProject
-        fields = '__all__'
-
-
-      
-class ApplyProjectAndProjectSerializer(serializers.ModelSerializer):
-    project_id = ProjectCreationSerializer(read_only=True)
-    class Meta:
-        model = ApplyProject
-        fields = '__all__'
-
-
-# Project Status Serializer
-class ProjectStatusSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = ProjectStatus
-        fields= '__all__'
-        
-# Payment Status Serializer
-class PaymentStatusSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = PaymentStatus
-        fields= '__all__'
-        
-# Project Profile File Serializer
-class ProjectFileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProjectFile
-        fields = '__all__'
-        
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
@@ -458,4 +275,5 @@ class AppliedFreelancerSerializer(serializers.ModelSerializer):
         fields = '__all__'      
  
 
-    
+
+        
