@@ -908,7 +908,7 @@ class GetAssignedProjectUsingFrelancerID(APIView):
         print(project_ids_queryset.values())
         project_id_list = []
         for i in project_ids_queryset:
-            project_id_list.append(i.project_id_id)
+            project_id_list.append(i.project_id)
         print("the list of ids of assigned project is : ", project_id_list)
         project_queryset = Projects.objects.filter(id__in=project_id_list)
         serialized = ProjectCreationSerializer(project_queryset, many=True)
