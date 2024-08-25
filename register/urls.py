@@ -30,21 +30,10 @@ urlpatterns = [
      path('update-user/', views.UpdateUserView.as_view(), name='update_user_details'),
      path('delete-user/<int:pk>/', views.GetUserView.as_view(), name='delete_user'),
   
-     
-
-     
-     
-     
-     
-     
      # for authentication
      path('user-authentication/', authenticationview.UserAutheniticationExampleView.as_view(), name='user-authentication'),
-     
      # include
-     
-     
      # path('', include(router.urls)),
-     
 
      # address url
       path('get_address/', AddressDetailView.as_view(), name='address-detail'),

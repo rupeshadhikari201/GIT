@@ -1,16 +1,11 @@
-import ast
-from urllib import response
-from rest_framework import status
-from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
+from django.utils.encoding import smart_str, force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework import serializers
 from freelancer.serializer import FreelancerDetailsSerializer
-from payment.models import PaymentStatus
-from project.models import ApplyProject, ProjectFile
+from project.models import ApplyProject
 from freelancer.models import Freelancer
 from register.models import  Notification, User, Address
-from register.utils import Util
 from django.core.mail import send_mail
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404
@@ -45,13 +40,10 @@ class UserLoginSerializer(serializers.ModelSerializer):
         fields = ['email','password', 'is_verified','id']
         
     def validate(self, attrs):
-        print("the attrs from validate is :", attrs['email'])
         email = attrs['email']
         try:
-            
+            email = str(email).lower()
             user = User.objects.get(email=email)
-            user2 = User.objects.filter(email=email)
-            print("the user is : ", user)
             attrs['is_verified'] = user.is_verified
             attrs['id'] = user.id
             return attrs
@@ -80,6 +72,8 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
         password = attrs.get('password')
         cnfpassword = attrs.get('cnfpassword')
         user = self.context.get('user')
+        if len(password) < 6:
+            raise serializers.ValidationError("password length should be atleast 6")
         if password != cnfpassword:
             raise serializers.ValidationError("Password and Confirm  Password is not Equal")
         user.set_password(password)
@@ -102,16 +96,11 @@ class SendPasswordResetEmailSerializer(serializers.ModelSerializer):
             user = User.objects.get(email=email)
             # 2. get the user id, and encode it for privacy purpose
             uid = urlsafe_base64_encode(force_bytes(user.id)) 
-            print("Encoded Uid is: ", uid)
             # 3. generate the token for that user
             token = PasswordResetTokenGenerator().make_token(user)
-            print("Password Reset Token : ", token)
             # 4. generate the reset link
             baseUrl = 'http://localhost:8000' if os.getenv('PR') == 'False' else 'https://gokap.onrender.com'
-            print(os.getenv('PR'))
             link = baseUrl + "/api/user/user-password-update/" + uid +"/" + token
-            print("Password Reset Link : ", link)
-            print("The target email is : ", user.email)
             subject = 'Password Reset'
             body  = f'Dear, {user.firstname} please reset the email using following link. {link}'
             send_from = "gokap@gokapinnotech.com"
@@ -139,13 +128,11 @@ class UserPasswordUpdateSerializer(serializers.ModelSerializer):
         else:
             # 1. get the id and decode it to sting
             uid = smart_str(urlsafe_base64_decode(uid))
-            print("Actual User id is : ", uid)
-            print("Actual token is :",token)
             # 2. get the token and match with if the token generated for that user is same or not
             # each user is assigned a unique token by PRTG, 
             # so chekc if the this token which we got from url matches with the user or not
             user = User.objects.get(id=uid)
-            print("The Actual User is : ", user)
+          
             token_generator_object = PasswordResetTokenGenerator()
             if not token_generator_object.check_token(user,token):
                 raise serializers.ValidationError("The token is Invalid or Expired.")
@@ -172,8 +159,6 @@ class SendUserVerificationSerializer(serializers.ModelSerializer):
     
     
     def validate(self, attrs):
-        print("the type of attrs is     : ", type(attrs))
-        print("the attrs of validate is : ", attrs)
         # Check if the user with the provided email exists in our database or 
         email = attrs.get('email')
         if User.objects.filter(email=email).exists():
@@ -182,16 +167,12 @@ class SendUserVerificationSerializer(serializers.ModelSerializer):
             user = User.objects.get(email=email)
             # 2. get the user id, and encode it for privacy purpose
             uid = urlsafe_base64_encode(force_bytes(user.id)) 
-            print("Encoded Uid is: ", uid)
             # 3. generate the token for that user
             token = PasswordResetTokenGenerator().make_token(user) 
-            print("Password Reset Token : ", token)
             # 4. generate the reset link
             baseUrl = 'http://localhost:8000' if os.getenv('PR') == 'False' else 'https://gokap.onrender.com'
             link =  baseUrl + "/api/user/validate-email/" + uid +"/" + token
-            print("Password Reset Link : ", link)
-            print("The target email is : ", user.email)
-              
+            
             subject = 'Verify Your Email'
             body  = f'Dear, {user.firstname} please verify the email using following link. {link}'
             send_from = "gokap@gokapinnotech.com"
@@ -215,18 +196,13 @@ class VerifyUserEmailSerializer(serializers.ModelSerializer):
         fields = ['id']
  
     def validate(self, attrs):
-  
-        print("the is atrr :",attrs.items())
-        print("this is new id and token : ",self.id, self.token)
        
         # 1. get the id and decode it to sting
         uid = smart_str(urlsafe_base64_decode(self.id))
-        print("Actual User id is : ", uid)
         # 2. get the token and match with if the token generated for that user is same or not
         # each user is assigned a unique token by PRTG, 
         # so chekc if the this token which we got from url matches with the user or not
         user = User.objects.get(id=uid)
-        print("The Actual User is : ", user)
         token_generator_object = PasswordResetTokenGenerator()
         if not token_generator_object.check_token(user,self.token):
             raise serializers.ValidationError("The token is Invalid or Expired.")
