@@ -54,8 +54,8 @@ class Projects(models.Model):
     
 class ProjectsAssigned(models.Model):
     
-    frelancer_id = models.ForeignKey(Freelancer, on_delete=models.CASCADE)
-    project_id = models.ForeignKey(Projects, on_delete=models.CASCADE)
+    frelancer = models.ForeignKey(Freelancer, on_delete=models.CASCADE)
+    project = models.ForeignKey(Projects, on_delete=models.CASCADE)
     assigned_at = models.DateTimeField(auto_now_add=True)
     revoke = models.BooleanField(default=False)
     
@@ -68,15 +68,15 @@ class ProjectsAssigned(models.Model):
 # Apply Project
 class ApplyProject(models.Model):
     class Meta:
-        unique_together = ('project_id','frelancer_id')
+        unique_together = ('project','frelancer')
     STATUS_CHOICES = [
         ('PA', 'Pending Approval'),
         ('AC', 'Accepted'),
         ('RE', 'Rejected'),
     ]
     
-    frelancer_id = models.ForeignKey(Freelancer, on_delete=models.CASCADE)
-    project_id = models.ForeignKey(Projects, on_delete=models.CASCADE)
+    frelancer = models.ForeignKey(Freelancer, on_delete=models.CASCADE)
+    project = models.ForeignKey(Projects, on_delete=models.CASCADE)
     applied_at = models.DateTimeField(auto_now_add=True)
     proposal = models.TextField(blank=False)
     status = models.CharField(max_length=2, choices=STATUS_CHOICES, default='PA')
