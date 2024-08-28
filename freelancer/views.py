@@ -89,26 +89,7 @@ class UpdateFreelancerView(APIView):
     def patch(self, request):
         pass
 
-# GET applied  Freelancers details for any project_id
-class AppliedFreelancersVeiw(APIView):
-    
-    def get(self,request,project_id):
-        # get freelancers detail for specific project
-        try:
-           
-            freelancer_data = []
-            applied_project_freelancer  = ApplyProject.objects.filter(project_id=project_id).select_related('frelancer_id')
-            for application in applied_project_freelancer:
-                freelancer = application.frelancer_id
-                freelancer_data.append({
-                    'freelancer_id': freelancer.pk,
-                    'details': serializer.ApplyProjectSerializer(application).data
-                })
-                
-            return Response({"freelancers": freelancer_data}, status=status.HTTP_200_OK)
-        except Exception as e :
-            return Response({"error":f"{e}"},status=status.HTTP_400_BAD_REQUEST)
-        
+
 # Apply Projects
 class ApplyProjectView(APIView):
     renderer_classes = [UserRenderer]
