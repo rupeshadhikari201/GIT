@@ -21,14 +21,11 @@ urlpatterns = [
      path('send_verification/', SendUserVerificationLinkView.as_view(), name='send_verification'),
      path('verify_email/<int>/<token>/', VerifyUserEmailView.as_view(), name="verify-email"),
      path('logout/', LogoutView.as_view(), name='logout'),
-     
-     
      path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-     
-     path('get-user/', views.GetUserView.as_view(), name='get_user_list'),
-     path('get-user/<int:pk>/', views.GetUserView.as_view(), name='get_user_details'),
-     path('update-user/', views.UpdateUserView.as_view(), name='update_user_details'),
-     path('delete-user/<int:pk>/', views.GetUserView.as_view(), name='delete_user'),
+     path('users/', views.GetUserView.as_view(), name='get_user_list'),
+     path('user/<int:pk>/', views.GetUserView.as_view(), name='get_user_details'),
+     path('update/user/', views.UpdateUserView.as_view(), name='update_user_details'),
+     path('delete/user/<int:pk>/', views.GetUserView.as_view(), name='delete_user'),
   
      # for authentication
      path('user-authentication/', authenticationview.UserAutheniticationExampleView.as_view(), name='user-authentication'),

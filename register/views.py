@@ -18,7 +18,7 @@ from django.utils import timezone
 import logging
 import os
 from django.utils.functional import empty
-from django.db.models import Q
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 
 logger = logging.getLogger(__name__)
@@ -236,10 +236,6 @@ class UpdateUserView(APIView):
         user_queryset.save()
         return Response({'msg': 'User Update Sucessfull'}, status=status.HTTP_200_OK)
 
-
-
-from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
