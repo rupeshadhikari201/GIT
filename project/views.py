@@ -19,7 +19,6 @@ class ProjectCreationView(APIView):
     def post(self,request,*args, **kwargs):
         data = request.data
         data['client'] = request.user.id
-        print(data)
         serialized = serializer.ProjectCreationSerializer(data=data)
         if serialized.is_valid():
             serialized.save()
@@ -127,7 +126,7 @@ class GetUnassingedProjects(APIView):
         # Fetch all projects that are not assigned
         unassigned_projects = Projects.objects.filter(project_assigned_status=False).order_by('-created_at')
         serializered = serializer.GetUnassingedProjectSerializer(unassigned_projects, many=True)
-        return Response({'data': serializered.data, 'msg': "Unassigned Projects Retrieved Successfully"}, status=status.HTTP_200_OK)
+        return Response({'serialized_data': serializered.data}, status=status.HTTP_200_OK)
 
 # Delete Unassigned Project Project
 class DeleteUnassignedProject(APIView):
