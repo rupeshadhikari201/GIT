@@ -188,4 +188,4 @@ class GetDetailsOfFrelancers(APIView):
     def get(self,request):
         frelancers_queryset = User.objects.filter(user_type="freelancer")
         serialized = serializer.GetDetailsOfFrelancersSerializer(frelancers_queryset, many=True)
-        return Response({"data": serialized.data}, status=status.HTTP_200_OK)
+        return Response({"serialized_data": serialized.data}, status=status.HTTP_200_OK)
