@@ -75,7 +75,7 @@ class GetUserDetailsOfClients(APIView):
     def get(self, request):
         clients_queryset = User.objects.filter(user_type="client")
         serialized = GetDetailsOfFrelancersSerializer(clients_queryset, many=True)
-        return Response({"data": serialized.data}, status=status.HTTP_200_OK)
+        return Response({"serialized_data": serialized.data}, status=status.HTTP_200_OK)
     
 # api that return's clients project details by that client id
 class GetClientProjectsDetailByCliendId(APIView):
@@ -84,6 +84,6 @@ class GetClientProjectsDetailByCliendId(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self,request,client_id):
-        queryset = Projects.objects.filter(client_id=client_id)
+        queryset = Projects.objects.filter(client=client_id)
         serialized = ProjectCreationSerializer(queryset, many=True)
-        return Response({"data":serialized.data})
+        return Response({"serialized_data":serialized.data})
