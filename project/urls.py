@@ -7,7 +7,7 @@ urlpatterns = [
     path('unassigned/', views.GetUnassingedProjects.as_view(), name='get_unassigned_project'),
     path('price_filter/<int:price_start>/<int:price_end>/<int:n_applicant>',views.PriceFilterView.as_view(), name='price_filter'), 
     path('search/', views.ProjectSearchView.as_view(), name='search_project'),
-    path('details/<int:project_id>/',views.GetProjectDetailsByIdView.as_view(),name="get_project_detail"),
-    path('<int:project_id>/files/', views.ProjectFileView.as_view(), name='project_files'),
+    path('detail/<int:project_id>/',views.GetProjectDetailsByIdView.as_view(),name="get_project_detail"),
+    path('files/<int:project_id>/', views.ProjectFileView.as_view(), name='project_files'),
     path('status/', views.ProjectStatusView.as_view(), name='project_status'),
 ]
