@@ -1,5 +1,5 @@
 from django.urls import path, include
-from register.views import AddressDetailView,LogoutView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView,SendUserVerificationLinkView, VerifyUserEmailView, SendPasswordResetEmailView
+from register.views import AddressDetailView,LogoutView, UserPasswordUpdateView, UserProfileByIdView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView,SendUserVerificationLinkView, VerifyUserEmailView, SendPasswordResetEmailView
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.urlpatterns import format_suffix_patterns
 from register import views
@@ -12,9 +12,10 @@ from register import authenticationview
 
 
 urlpatterns = [
-     path("user/", UserRegistrationView.as_view(), name="user"),
+     path("register/", UserRegistrationView.as_view(), name="user"),
      path('login/',UserLoginView.as_view(), name='login'),
      path('profile/', UserProfileView.as_view(), name='profile'),
+     path('profile/<int:user_id>/', UserProfileByIdView.as_view(), name='profile_by_id'),
      path("change_password/", ChangePasswordView.as_view(), name='change_password'),
      path("reset_password/", SendPasswordResetEmailView.as_view(), name='reset_password'),
      path('update_password/<uid>/<token>/', UserPasswordUpdateView.as_view(), name='update_password'),
@@ -22,10 +23,10 @@ urlpatterns = [
      path('verify_email/<int>/<token>/', VerifyUserEmailView.as_view(), name="verify-email"),
      path('logout/', LogoutView.as_view(), name='logout'),
      path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-     path('users/', views.GetUserView.as_view(), name='get_user_list'),
-     path('user/<int:pk>/', views.GetUserView.as_view(), name='get_user_details'),
-     path('update/user/', views.UpdateUserView.as_view(), name='update_user_details'),
-     path('delete/user/<int:pk>/', views.GetUserView.as_view(), name='delete_user'),
+     path('all/users', views.GetUserView.as_view(), name='get_user_list'),
+     path('<int:pk>/', views.GetUserView.as_view(), name='get_user_details'),
+     path('update/', views.UpdateUserView.as_view(), name='update_user_details'),
+     path('delete/<int:pk>/', views.GetUserView.as_view(), name='delete_user'),
   
      # for authentication
      path('user-authentication/', authenticationview.UserAutheniticationExampleView.as_view(), name='user-authentication'),
@@ -33,7 +34,7 @@ urlpatterns = [
      # path('', include(router.urls)),
 
      # address url
-      path('get_address/', AddressDetailView.as_view(), name='address-detail'),
+      path('address/', AddressDetailView.as_view(), name='address-detail'),
 
       
 ] 
