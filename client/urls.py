@@ -6,5 +6,5 @@ urlpatterns = [
     path('details/<int:client_id>', views.GetClientDetailsById.as_view(), name='client_details_by_id'),
     path('projects/', views.GetClientProjects.as_view(), name='get-client-project'),
     path('projects/<int:client_id>/', views.GetClientProjectsDetailByCliendId.as_view()),
-    path("user_details/", views.GetUserDetailsOfClients.as_view()),
+    path("all/", views.GetUserDetailsOfClients.as_view()),
 ]
