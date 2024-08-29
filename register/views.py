@@ -88,16 +88,20 @@ class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
-
         serializer = UserProfileSerializer(request.user)
-        # response_data = {
-        #     # 'msg': f'The profile details of the user with user id {user.id} is : ',
-        #     # 'id': user.id,
-        #     # 'email': user.email,
-        #     # 'name': f'{user.firstname} {user.lastname}',
-        #     'data': serializer.data,
-        # }
         return Response({"serialized_data": serializer.data},status=status.HTTP_200_OK)
+class UserProfileByIdView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        try:
+            query_set = User.objects.get(pk=user_id)
+            serializer = UserProfileSerializer(query_set)
+            return Response({"serialized_data": serializer.data},status=status.HTTP_200_OK)
+        except Exception as e :
+            return Response({'errors':str(e)})
+    
 
 class ChangePasswordView(APIView):
     renderer_classes = [UserRenderer]
@@ -266,7 +270,7 @@ class AddressDetailView(APIView):
             serializer = AddressSerializer(address)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'errors' : str(e)})
+            return Response({'errors' : str(e)},status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request):
         data = request.data
