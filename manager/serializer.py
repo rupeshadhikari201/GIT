@@ -2,6 +2,8 @@ from rest_framework import serializers
 from project.models import ProjectsAssigned
 from django.shortcuts import get_object_or_404
 
+from register.models import User
+
 class ProjectAssignSerializer(serializers.ModelSerializer):
     
     class Meta:
@@ -17,4 +19,13 @@ class ProjectAssignSerializer(serializers.ModelSerializer):
         except:
             attrs['assigned'] = False
             raise serializers.ValidationError
+        
+
+
+class SendInvitationToFreelancerSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(max_length=255)
+    
+    class Meta:
+        model = User
+        fields = ['email']
       
