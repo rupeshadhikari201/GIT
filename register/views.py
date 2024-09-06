@@ -287,7 +287,17 @@ class AddressDetailView(APIView):
             return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"msg": "Address deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+class UserProfileByIdView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request, user_id):
+        try:
+            query_set = User.objects.get(pk=user_id)
+            serializer = UserProfileSerializer(query_set)
+            return Response({"serialized_data": serializer.data},status=status.HTTP_200_OK)
+        except Exception as e :
+            return Response({'errors':str(e)})
 
 
 
