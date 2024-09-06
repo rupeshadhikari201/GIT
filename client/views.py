@@ -24,20 +24,15 @@ class ClientCreationView(APIView):
         if serialized.is_valid():
             # Get or create a client instance
             client_instance, created = Client.objects.get_or_create(user=request.user)
-            print("client_instance", client_instance)
-            print("instance", created)
-            
             # Associate the project with the client
             serialized.save(client=client_instance)
-            
-            return Response({"msg":"Client Created!", "details": serialized.data}, status=status.HTTP_201_CREATED)
-        return Response({"error": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"msg":"Client Created!", "serialized_data": serialized.data}, status=status.HTTP_200_OK)
+        return Response({"errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
         
     def get(self,request, *args, **kwargs):
-        
         clients = Client.objects.all()
         serialized = ClientCreationSerializer(clients, many=True)
-        return Response({'data': serialized.data})
+        return Response({'serialized_data': serialized.data},status=status.HTTP_200_OK)
     
 # Get Client Details by Id
 class GetClientDetailsById(APIView):
@@ -62,10 +57,10 @@ class GetClientProjects(APIView):
         user = request.user
         id = user.id
         # get all the projects created by the user with given id. 
-        queryset = Projects.objects.filter(client_id=id)
+        queryset = Projects.objects.filter(client=id)
         serialized = serializer.GetClientProjectsSerializer(queryset, many=True)
 
-        return Response(serialized.data)
+        return Response({'serialized_data':serialized.data},status=status.HTTP_200_OK)
 
 # Get User Details of a User Type Clients
 class GetUserDetailsOfClients(APIView):
