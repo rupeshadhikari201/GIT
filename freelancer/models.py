@@ -9,6 +9,7 @@ class Freelancer(models.Model):
         ('Fa' , 'Facebook'),
         ('F','Friends'),
         ('T' , 'Twitter'),
+        ('TM','Team Member'),
         ('G' , 'Google'),
         ('O' , 'Others'),
         ('Y','Youtube')    
@@ -21,7 +22,8 @@ class Freelancer(models.Model):
     reason_to_join = models.TextField()
     where_did_you_heard = models.CharField(max_length=10, choices=WHERE_DID_YOU_HEARD)
     resume = models.FileField(upload_to='resumes/', blank=True, null=True)
-    bio = models.TextField()
+    bio = models.TextField(blank=False,null=False)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return str(self.user)

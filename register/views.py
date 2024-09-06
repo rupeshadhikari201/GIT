@@ -1,7 +1,4 @@
-import json
-from django.http import HttpResponse, JsonResponse
 from django.db.models import Count
-from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics
@@ -19,7 +16,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import  render
 from django.utils.encoding import smart_str
 from django.utils.http import urlsafe_base64_decode
 from register.models import User
@@ -27,7 +24,7 @@ from django.utils import timezone
 import logging
 import os
 from django.utils.functional import empty
-from django.db.models import Q
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 
 logger = logging.getLogger(__name__)
@@ -45,8 +42,10 @@ def get_tokens_for_user(user):
 # API to Register User
 class UserRegistrationView(APIView):
     renderer_classes = [UserRenderer]
-    
+
     def post(self, request, format=None):
+        #changing to lowercase
+        request.data['email'] = request.data['email'].lower() if request.data and request.data['email'] else ""
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
            user = serializer.save()
@@ -54,9 +53,7 @@ class UserRegistrationView(APIView):
            user_id = user.id
            if(user.user_type == "client"):
                 client_instance, created = Client.objects.get_or_create(user=user)
-                print("client_instance", client_instance)
-                print("instance", created)
-           return Response({"token":token, 'msg': "User Registration Sucessfull", "user_id": user_id }, status=status.HTTP_201_CREATED) 
+           return Response({"token":token, 'msg': "User Registration Sucessfull", "user_id": user_id }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # API to Login User
@@ -85,7 +82,7 @@ class UserLoginView(APIView):
                     # created_at = user.created_at  # Fetch created_at from user object
                     return Response({'token': token, 'msg': "User Login Sucessfull", 'user_type': user_type,"user_id" : user_id}, status.HTTP_202_ACCEPTED)
                 else:
-                    return Response({'msg' : "User not verified"}, status=status.HTTP_401_UNAUTHORIZED)
+                    return Response({'errors' : "User not verified"}, status=status.HTTP_401_UNAUTHORIZED)
             else:
                 return Response({'errors' : {'non_field_errors' : ['Email or Password not Valid']}}, status.HTTP_404_NOT_FOUND)
         else:
@@ -95,7 +92,7 @@ class UserLoginView(APIView):
 class UserProfileView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request, format=None):
         print("request.user is: ", request.user)
         print("request.data is: ", request.data)
@@ -106,7 +103,7 @@ class UserProfileView(APIView):
 class ChangePasswordView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
-    
+
     def post(self,request,format=None):
         # The user is send as context to the ChangePassword Serializer
         user = request.user
@@ -136,10 +133,10 @@ class UserPasswordUpdateView(APIView):
         print(request)
         print(uid)
         print(token)
-        
+
         context = {
-            'id' : uid, 
-            'token' : token, 
+            'id' : uid,
+            'token' : token,
             'url' : 'http://localhost:8000' if os.getenv('PR') == 'False' else 'https://gokap.onrender.com'
         }
         
@@ -164,7 +161,7 @@ class SendUserVerificationLinkView(APIView):
     
 # API to Verify User Email
 class VerifyUserEmailView(APIView):
-    
+
     renderer_classes = [UserRenderer]
     
     def get(self, request, *args, **kwargs):
@@ -175,15 +172,13 @@ class VerifyUserEmailView(APIView):
         uid = smart_str(urlsafe_base64_decode(id[4]))
         
         context = {
-            'id' : id[4], 
+            'id' : id[4],
             'token' : id[5]
         }
 
         request.data['id'] = uid
-        request.data['firstname'] = 'rupesh'
-
         serialized = VerifyUserEmailSerializer(data=request.data, context=context)
-        
+
         if serialized.is_valid():
             return render(request=request,template_name='verified.html')            
         return render(request=request, template_name='404.html')
@@ -196,10 +191,10 @@ class GetUserView(mixins.ListModelMixin,
               mixins.DestroyModelMixin,
               generics.GenericAPIView
               ):
-    
+
     queryset = User.objects.all()
     serializer_class = GetUserSerializer
-    
+
     def get(self, request, *args, **kwargs):
         
         # Check if 'pk' is in kwargs to determine whether to retrieve a single user or all users
@@ -220,7 +215,7 @@ class UpdateUserView(APIView):
         # Get the last UpdatedTime
         last_updated = user_queryset.updated_at  
         current_time = timezone.now()
-        
+
         if last_updated and (current_time - last_updated).days < 7:
             return Response({'error': f'Your name was updated on : { last_updated } \n You can only update your name only after a week.'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -228,7 +223,6 @@ class UpdateUserView(APIView):
         user_queryset.lastname = request.data['lastname']
         user_queryset.last_updated = current_time  # Update the last updated time
         user_queryset.save()
-        
         return Response({'msg': 'User Update Sucessfull'}, status=status.HTTP_200_OK)
     
 # API TO Logout User
@@ -239,11 +233,9 @@ class LogoutView(APIView):
         try:
             auth_header = request.headers.get('Authorization')
             if not auth_header or not auth_header.startswith('Bearer '):
-                return Response({"error": "Invalid token format"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"errors": "Invalid token format"}, status=status.HTTP_400_BAD_REQUEST)
 
             token = auth_header.split(' ')[1]
-            token_obj = AccessToken(token)
-            
             # Add token to blacklist
             outstanding_token = OutstandingToken.objects.get(token=token)
             BlacklistedToken.objects.create(token=outstanding_token)
@@ -261,9 +253,9 @@ class AddressDetailView(APIView):
             address = request.user.address
             serializer = AddressSerializer(address)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except Exception as e: 
-            return Response({'error' : str(e)})
-    
+        except Exception as e:
+            return Response({'errors' : str(e)},status=status.HTTP_400_BAD_REQUEST)
+
     def post(self, request):
         data = request.data
         data['user'] = request.user.id
@@ -276,33 +268,30 @@ class AddressDetailView(APIView):
     def put(self, request):
         address = None
         try:
-            address = request.user.address if request.user.address is not empty else None 
+            address = request.user.address if request.user.address is not empty else None
         except Exception as e:
-            return Response({"error" :  "The user has no address"},status=status.HTTP_404_NOT_FOUND)
-        
+            return Response({"errors" :  "The user has no address"},status=status.HTTP_404_NOT_FOUND)
+
         serializer = AddressSerializer(address, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({"msg" : "Address updated successfully", "data" : serializer.data}, status=status.HTTP_200_OK)
+            return Response({"serialized_data" : serializer.data}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def delete(self, request):
-    
-        try: 
+
+        try:
             address = request.user.address
             address.delete()
-            print("user is : ", request.user)
-            print("address is : ", request.user.address)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"msg": "Address deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
-    
 
-    
 
-    
-    
 
-    
+
+
+
+

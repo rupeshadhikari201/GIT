@@ -18,7 +18,6 @@ class ProjectCreationView(APIView):
     def post(self,request):
         data = request.data
         data['client'] = request.user.id
-        print(data)
         serialized = serializer.ProjectCreationSerializer(data=data)
         if serialized.is_valid():
             serialized.save()
@@ -44,25 +43,25 @@ class ProjectUpdateView(APIView):
         # get object
         project = self.get_object(project_id)
         if project is None:
-            return Response({"msg": "Project is not found"}, status=status.HTTP_404_NOT_FOUND) 
+            return Response({"errors": "Project is not found"}, status=status.HTTP_404_NOT_FOUND) 
         
         serialized = serializer.ProjectCreationSerializer(project, data=request.data)
         if serialized.is_valid():
             serialized.save()
-            return Response({"msg":"Project Updated!", "details": serialized.data}, status=status.HTTP_201_CREATED)
-        return Response({ "errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"msg":"Project Updated!", "serialized_data": serialized.data}, status=status.HTTP_201_CREATED)
+        return Response(serialized.errors, status=status.HTTP_400_BAD_REQUEST)
     
     
     def patch(self, request, project_id, *args, **kwargs):
         project = self.get_object(project_id)
         if project is None:
-            return Response({'msg': "Project not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'errors': "Project not found"}, status=status.HTTP_404_NOT_FOUND)
         
         serializered = serializer.ProjectCreationSerializer(project, data=request.data, partial=True)
         if serializered.is_valid():
             serializered.save()
             return Response({"msg": "Project Updated!", "details": serializered.data}, status=status.HTTP_200_OK)
-        return Response({"errors": serializered.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializered.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # API to FilterProject Serializer
 class PriceFilterView(APIView): 
@@ -99,12 +98,18 @@ class ProjectSearchView(APIView):
         min_applicants = request.query_params.get('min_applicants', None)
         max_applicants = request.query_params.get('max_applicants', None)
 
-        queryset = Projects.objects.all()
-
+        
+        
         if title:
-            queryset = queryset.filter(title__icontains=title)
+            title_queryset = Projects.objects.filter(title__icontains=title)
+            queryset = title_queryset
         if description:
-            queryset = queryset.filter(description__icontains=description)
+            desc_queryset = Projects.objects.filter(description__icontains=description)
+            queryset = desc_queryset
+        if title and description:
+            queryset = title_queryset | desc_queryset
+        elif not (title or  description):
+            queryset = Projects.objects.all()
         if min_price:
             queryset = queryset.filter(project_price__gte=min_price)
         if max_price:
@@ -115,7 +120,7 @@ class ProjectSearchView(APIView):
             queryset = queryset.filter(applied_count__lte=max_applicants)
 
         if not (title or description or min_price or max_price or min_applicants or max_applicants):
-            return Response({"error": "No search criteria provided"}, status=400)
+            return Response({"errors": "No search criteria provided"}, status=400)
 
         serialized = serializer.ProjectCreationSerializer(queryset, many=True)
         return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
@@ -129,7 +134,7 @@ class GetUnassingedProjects(APIView):
         # Fetch all projects that are not assigned
         unassigned_projects = Projects.objects.filter(project_assigned_status=False).order_by('-created_at')
         serializered = serializer.GetUnassingedProjectSerializer(unassigned_projects, many=True)
-        return Response({'data': serializered.data, 'msg': "Unassigned Projects Retrieved Successfully"}, status=status.HTTP_200_OK)
+        return Response({'serialized_data': serializered.data}, status=status.HTTP_200_OK)
 
 # Delete Unassigned Project Project
 class DeleteUnassignedProject(APIView):
@@ -143,16 +148,13 @@ class DeleteUnassignedProject(APIView):
         
         # check if the project with the id exists
         if Projects.objects.filter(id=project_id):
-        
             project = Projects.objects.get(id = project_id)
             if project.project_assigned_status == False:
                 delete_status = project.delete()
-                print("delete_status", delete_status)
                 return Response({"msg": "Project deleted sucessfully"}, status=status.HTTP_200_OK )
-        
-            return Response({"msg": "Project is Assigned"}, status=status.HTTP_400_BAD_REQUEST )  
+            return Response({"errors": "Project is Assigned"}, status=status.HTTP_400_BAD_REQUEST )  
         else:
-            return Response({"msg": "Project Does Not Exists"}, status=status.HTTP_400_BAD_REQUEST )  
+            return Response({"errors": "Project Does Not Exists"}, status=status.HTTP_400_BAD_REQUEST )  
     
 # Get the Projects Details by Project Id
 class GetProjectDetailsByIdView(APIView):

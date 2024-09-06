@@ -1,5 +1,5 @@
 from django.urls import path, include
-from register.views import AddressDetailView,LogoutView, UserPasswordUpdateView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView,SendUserVerificationLinkView, VerifyUserEmailView, SendPasswordResetEmailView
+from register.views import AddressDetailView,LogoutView, UserPasswordUpdateView, UserProfileByIdView,UserRegistrationView, UserLoginView, UserProfileView, ChangePasswordView,SendUserVerificationLinkView, VerifyUserEmailView, SendPasswordResetEmailView
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.urlpatterns import format_suffix_patterns
 from register import views
@@ -15,6 +15,7 @@ urlpatterns = [
      path("user/", UserRegistrationView.as_view(), name="user_registration"),
      path('login/',UserLoginView.as_view(), name='user_login'),
      path('profile/', UserProfileView.as_view(), name='profile'),
+     path('profile/<int:user_id>/', UserProfileByIdView.as_view(), name='profile_by_id'),
      path("change_password/", ChangePasswordView.as_view(), name='change_password'),
      path("reset_password/", SendPasswordResetEmailView.as_view(), name='reset_password'),
      path('update_password/<uid>/<token>/', UserPasswordUpdateView.as_view(), name='update_password'),

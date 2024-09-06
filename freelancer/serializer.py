@@ -14,7 +14,7 @@ class FreelancerCreationSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Freelancer
-        fields = ['user', 'profession', 'skills','languages', 'reason_to_join','where_did_you_heard', 'resume','bio']
+        fields = ['user', 'profession', 'skills','languages', 'reason_to_join','where_did_you_heard', 'resume','bio','updated_at']
     
     '''
     The "to_internal_value" method is part of Django REST framework's serializer validation process. It is responsible for converting the incoming primitive data types (typically JSON) into native Python data types and validating them. This method is usually overridden to perform custom deserialization and validation.
@@ -64,13 +64,13 @@ class FreelancerDetailsSerializer(serializers.ModelSerializer):
 
 # Apply Project Serializer  
 class ApplyProjectSerializer(serializers.ModelSerializer):
-    
+    frelancer_id = FreelancerDetailsSerializer(read_only=True)
     class Meta:
         model = ApplyProject
         fields = '__all__'
         
 class ApplyProjectAndProjectSerializer(serializers.ModelSerializer):
-    project_id = ProjectCreationSerializer(read_only=True)
+    project = ProjectCreationSerializer(read_only=True)
     class Meta:
         model = ApplyProject
         fields = '__all__'

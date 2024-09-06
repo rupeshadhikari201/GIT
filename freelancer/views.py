@@ -33,14 +33,12 @@ class FreelancerCreationView(APIView):
             # If the data is valid, this line saves the data to the database.
             serialized.save()
             return Response({"msg": "Freelancer Created", "serialized_data": serialized.data}, status=status.HTTP_201_CREATED)
-        return Response({"error" : serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serialized.errors, status=status.HTTP_400_BAD_REQUEST)
     
     # get all the frelancers
     def get(self, request):
-     
         # Get the queryset 
         freelancers = Freelancer.objects.all()
-        
         # The many parameter is a boolean flag used to indicate whether the serializer should be used to serialize a single instance (many=False) or multiple instances (many=True)
         serialized = FreelancerCreationSerializer(freelancers, many=True)
         
@@ -73,12 +71,11 @@ class UpdateFreelancerView(APIView):
         data = request.data
         data['user'] = user.id
         freelancer = Freelancer.objects.get(user=user.id)
-        queryset = FreelancerCreationSerializer(freelancer,data=data,partial=True)
-        print("queryset",queryset)
-        if queryset.is_valid():
-            queryset.save()
-            return Response({'msg':"success", 'data': queryset.data}, status=status.HTTP_200_OK)
-        return Response({'error': queryset.errors}, status=status.HTTP_400_BAD_REQUEST)  
+        serialized = FreelancerCreationSerializer(freelancer,data=data,partial=True)
+        if serialized.is_valid():
+            serialized.save()
+            return Response({'msg':"success", 'serialized_data': serialized.data}, status=status.HTTP_200_OK)
+        return Response(serialized.errors, status=status.HTTP_400_BAD_REQUEST)  
         
     def patch(self, request):
         pass
@@ -134,16 +131,35 @@ class GetAppliedProject(APIView):
         
         try:
             freelancer = Freelancer.objects.get(user=user)
-            applied_projects = ApplyProject.objects.filter(frelancer_id=freelancer).select_related('project_id').all()
-            print(applied_projects.values_list())
+            applied_projects = ApplyProject.objects.filter(frelancer_id=freelancer).select_related('project').all()
             try:
                 serialized = serializer.ApplyProjectAndProjectSerializer(applied_projects, many=True)
                 return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
             except Exception as e: 
-                return Response({'error' : str(e)})
+                return Response({'errors' : str(e)},status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error': str(e),}, status=status.HTTP_404_NOT_FOUND)
-   
+            return Response({'errors': str(e),}, status=status.HTTP_404_NOT_FOUND)
+#Get appliedProjectById
+class GetAppliedProjectById(APIView):
+    
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request,applied_id):
+        # 1. get the user 
+        user = request.user
+        
+        try:
+            freelancer = Freelancer.objects.get(user=user)
+            applied_projects = ApplyProject.objects.filter(pk=applied_id,frelancer_id=freelancer).select_related('project').all()
+            print(applied_projects.values_list(),"applied projects")
+            try:
+                serialized = serializer.ApplyProjectAndProjectSerializer(applied_projects,many=True)
+                return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
+            except Exception as e: 
+                return Response({'errors' : str(e)},status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'errors': str(e),}, status=status.HTTP_404_NOT_FOUND)
 # Search API based on Freelancer Skills
 class FreelancerSearchView(APIView):
     
@@ -201,4 +217,4 @@ class GetDetailsOfFrelancers(APIView):
     def get(self,request):
         frelancers_queryset = User.objects.filter(user_type="freelancer")
         serialized = serializer.GetDetailsOfFrelancersSerializer(frelancers_queryset, many=True)
-        return Response({"data": serialized.data}, status=status.HTTP_200_OK)
+        return Response({"serialized_data": serialized.data}, status=status.HTTP_200_OK)
