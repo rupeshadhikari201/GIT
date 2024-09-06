@@ -17,10 +17,6 @@ class FreelancerCreationView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, format=None):
-        
-        # Print the data that comes with the request from the form 
-        print("data", request.data)
-        
         # Along with the request comes the user(there is permission_classes) and the data 
         '''
         The issue you're facing is likely due to the fact that request.data is an immutable QueryDict object when dealing with form data. To modify it, you need to convert it to a mutable dictionary first.
@@ -28,8 +24,6 @@ class FreelancerCreationView(APIView):
         data = request.data.copy()
         user = request.user.id
         data['user'] = user
-        print("the final data is : ", data)
-        
         # This line creates an instance of the FreelancerSerializer class. 
         # It takes the request.data as the data to be serialized.
         serialized = FreelancerCreationSerializer(data=data)
@@ -39,14 +33,12 @@ class FreelancerCreationView(APIView):
             # If the data is valid, this line saves the data to the database.
             serialized.save()
             return Response({"msg": "Freelancer Created", "serialized_data": serialized.data}, status=status.HTTP_201_CREATED)
-        return Response({"error" : serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serialized.errors, status=status.HTTP_400_BAD_REQUEST)
     
     # get all the frelancers
     def get(self, request):
-     
         # Get the queryset 
         freelancers = Freelancer.objects.all()
-        
         # The many parameter is a boolean flag used to indicate whether the serializer should be used to serialize a single instance (many=False) or multiple instances (many=True)
         serialized = FreelancerCreationSerializer(freelancers, many=True)
         
@@ -79,12 +71,11 @@ class UpdateFreelancerView(APIView):
         data = request.data
         data['user'] = user.id
         freelancer = Freelancer.objects.get(user=user.id)
-        queryset = FreelancerCreationSerializer(freelancer,data=data,partial=True)
-        print("queryset",queryset)
-        if queryset.is_valid():
-            queryset.save()
-            return Response({'msg':"success", 'data': queryset.data}, status=status.HTTP_200_OK)
-        return Response({'error': queryset.errors}, status=status.HTTP_400_BAD_REQUEST)  
+        serialized = FreelancerCreationSerializer(freelancer,data=data,partial=True)
+        if serialized.is_valid():
+            serialized.save()
+            return Response({'msg':"success", 'serialized_data': serialized.data}, status=status.HTTP_200_OK)
+        return Response(serialized.errors, status=status.HTTP_400_BAD_REQUEST)  
         
     def patch(self, request):
         pass
@@ -96,18 +87,20 @@ class ApplyProjectView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
-        print("id", request.user.id)
-        data = request.data
-        data['frelancer_id'] = request.user.id
-        serializer = serializer.ApplyProjectSerializer(data= data)
-        print("data is",data)
-        project = Projects.objects.get(pk=data['project_id'])
-        if serializer.is_valid():
-            serializer.save()
-            project.applied_count += 1
-            project.save()
-            return Response({"msg": "Project Applied Sucess"}, status=status.HTTP_200_OK)
-        return Response({"error": serializer.errors}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            data = request.data
+            data['frelancer'] = request.user.id
+            print(data)
+            serialized = serializer.ApplyProjectSerializer(data=data)
+            if serialized.is_valid():
+                project = Projects.objects.get(pk=data['project'])
+                serialized.save()
+                project.applied_count += 1
+                project.save()
+                return Response({"msg": "Project Applied Sucess"}, status=status.HTTP_200_OK)
+            return Response( serialized.errors, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'errors':str(e)},status=status.HTTP_400_BAD_REQUEST)
 
 # The API to get all the applied projects of a particular freelancer based on their token
 class GetAppliedProject(APIView):
@@ -121,16 +114,35 @@ class GetAppliedProject(APIView):
         
         try:
             freelancer = Freelancer.objects.get(user=user)
-            applied_projects = ApplyProject.objects.filter(frelancer_id=freelancer).select_related('project_id').all()
-            print(applied_projects.values_list())
+            applied_projects = ApplyProject.objects.filter(frelancer_id=freelancer).select_related('project').all()
             try:
                 serialized = serializer.ApplyProjectAndProjectSerializer(applied_projects, many=True)
                 return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
             except Exception as e: 
-                return Response({'error' : str(e)})
+                return Response({'errors' : str(e)},status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error': str(e),}, status=status.HTTP_404_NOT_FOUND)
-   
+            return Response({'errors': str(e),}, status=status.HTTP_404_NOT_FOUND)
+#Get appliedProjectById
+class GetAppliedProjectById(APIView):
+    
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request,applied_id):
+        # 1. get the user 
+        user = request.user
+        
+        try:
+            freelancer = Freelancer.objects.get(user=user)
+            applied_projects = ApplyProject.objects.filter(pk=applied_id,frelancer_id=freelancer).select_related('project').all()
+            print(applied_projects.values_list(),"applied projects")
+            try:
+                serialized = serializer.ApplyProjectAndProjectSerializer(applied_projects,many=True)
+                return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
+            except Exception as e: 
+                return Response({'errors' : str(e)},status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'errors': str(e),}, status=status.HTTP_404_NOT_FOUND)
 # Search API based on Freelancer Skills
 class FreelancerSearchView(APIView):
     
