@@ -2,8 +2,7 @@ import os
 from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework.response import Response
-from freelancer.models import Freelancer
-from freelancer.serializer import ApplyProjectSerializer, FreelancerDetailsSerializer
+from freelancer.serializer import ApplyProjectSerializer, ApplyedProjectAndFreelancerSerializer, FreelancerDetailsSerializer
 from project.models import ApplyProject, Projects, ProjectsAssigned
 from project.serializer import ProjectCreationSerializer
 from register.models import User
@@ -94,8 +93,7 @@ class GetAssignedFreelancerUsingProjectId(APIView):
                 result.append({
                     "details":ApplyProjectSerializer(applied).data
                 })
-          
-            
+
             return Response({"serialized_data":result}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"errors":str(e)},status=status.HTTP_400_BAD_REQUEST)
@@ -126,15 +124,17 @@ class AppliedFreelancersVeiw(APIView):
         try:
             freelancer_data = []
             applied_project_freelancers  = ApplyProject.objects.filter(project=project_id).select_related('frelancer')
+            print(applied_project_freelancers,"applied project")
             for application in applied_project_freelancers:
                 freelancer = application.frelancer
                 freelancer_data.append({
                     'freelancer_id': freelancer.pk,
-                    'details': ApplyProjectSerializer(application).data
+                    'details': ApplyedProjectAndFreelancerSerializer(application).data
                 })
                 
             return Response({"serialized_data": freelancer_data}, status=status.HTTP_200_OK)
         except Exception as e :
+            print(e)
             return Response({"errors":f"{e}"},status=status.HTTP_400_BAD_REQUEST)
         
 
