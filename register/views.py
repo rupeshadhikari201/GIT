@@ -215,7 +215,6 @@ class GetUserView(mixins.ListModelMixin,
 
     def delete(self, request, *args, **kwargs):
         response =  super().destroy(request, *args, **kwargs)
-        response.data['msg'] = "User Deletion Sucessfull"
         return Response({"msg":"User deleted success"},status=status.HTTP_200_OK)
 
 
