@@ -1,12 +1,14 @@
 from rest_framework import serializers
 from project.models import ProjectFile, Projects, ProjectStatus
 
+# API serializer for ProjectCreation
 class ProjectCreationSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Projects
         fields = '__all__'
 
+# API serializer for GetUnassignedProject
 class GetUnassingedProjectSerializer(serializers.ModelSerializer):
     
     class Meta:

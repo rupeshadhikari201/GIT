@@ -11,23 +11,17 @@ from rest_framework import status
 from project.models import Projects, ApplyProject
 from freelancer import serializer
 
-# Create your views here.
+# API to Create Freelancer
 class FreelancerCreationView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
     
-    def post(self, request, format=None):
+    def post(self, request):
         
-        # Print the data that comes with the request from the form 
-        print("data", request.data)
-        
-        # Along with the request comes the user(there is permission_classes) and the data 
-        '''
-        The issue you're facing is likely due to the fact that request.data is an immutable QueryDict object when dealing with form data. To modify it, you need to convert it to a mutable dictionary first.
-        '''
+        # The data that we are getting from post request doesn't contains 'user', so we need to append 'user' because, Freelancer Model has 'user' attribute
         data = request.data.copy()
-        user = request.user.id
-        data['user'] = user
+        user_id = request.user.id
+        data['user'] = user_id
         print("the final data is : ", data)
         
         # This line creates an instance of the FreelancerSerializer class. 
@@ -88,9 +82,28 @@ class UpdateFreelancerView(APIView):
         
     def patch(self, request):
         pass
+       
+# Apply Projects View
+class ApplyProjectView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        print("id", request.user.id)
+        data = request.data
+        data['frelancer_id'] = request.user.id
+        serialized = serializer.ApplyProjectSerializer(data= data)
+        print("data is",data)
+        project = Projects.objects.get(pk=data['project_id'])
+        if serialized.is_valid():
+            serialized.save()
+            project.applied_count += 1
+            project.save()
+            return Response({"msg": "Project Applied Sucess"}, status=status.HTTP_200_OK)
+        return Response({"error": serialized.errors}, status=status.HTTP_404_NOT_FOUND)
 
-# GET applied  Freelancers details for any project_id
-class AppliedFreelancersVeiw(APIView):
+# GET applied Freelancers details For any project_id
+class AppliedFreelancersView(APIView):
     
     def get(self,request,project_id):
         # get freelancers detail for specific project
@@ -108,25 +121,6 @@ class AppliedFreelancersVeiw(APIView):
             return Response({"freelancers": freelancer_data}, status=status.HTTP_200_OK)
         except Exception as e :
             return Response({"error":f"{e}"},status=status.HTTP_400_BAD_REQUEST)
-        
-# Apply Projects
-class ApplyProjectView(APIView):
-    renderer_classes = [UserRenderer]
-    permission_classes = [IsAuthenticated]
-    
-    def post(self, request):
-        print("id", request.user.id)
-        data = request.data
-        data['frelancer_id'] = request.user.id
-        serializer = serializer.ApplyProjectSerializer(data= data)
-        print("data is",data)
-        project = Projects.objects.get(pk=data['project_id'])
-        if serializer.is_valid():
-            serializer.save()
-            project.applied_count += 1
-            project.save()
-            return Response({"msg": "Project Applied Sucess"}, status=status.HTTP_200_OK)
-        return Response({"error": serializer.errors}, status=status.HTTP_404_NOT_FOUND)
 
 # The API to get all the applied projects of a particular freelancer based on their token
 class GetAppliedProject(APIView):

@@ -6,6 +6,7 @@ from rest_framework import serializers
 from common.serializer import UserRegistrationSerializer
 from project.serializer import ProjectCreationSerializer
 
+# Freelancer Creation Serializer
 class FreelancerCreationSerializer(serializers.ModelSerializer):
     
     skills = serializers.ListField(child=serializers.CharField())
@@ -31,27 +32,28 @@ class FreelancerCreationSerializer(serializers.ModelSerializer):
     '''
     The validate method in a Django REST framework serializer is used to provide custom validation logic. The commented-out validate method you provided attempts to process the skills attribute, but it has some issues.
     '''
-    def validate(self, attrs):
-        # retrive the skills attribute from the attrs dictionary, which contains all the validated data
-        skills = attrs.get('skills')
+    # def validate(self, attrs):
+    #     # retrive the skills attribute from the attrs dictionary, which contains all the validated data
+    #     skills = attrs.get('skills')
         
-        # check if the skills is an instance of string
-        if isinstance(skills, str):
+    #     # check if the skills is an instance of string
+    #     if isinstance(skills, str):
             
-            # The ast.literal_eval function safely evaluates a string containing a Python literal or container display (like a list, dictionary, or string) and converts it into an actual Python object. This line assumes that skils is a string representation of a list and attempts to convert it into a Python list.
-            try:
-                skills_list = ast.literal_eval(skills)
+    #         # The ast.literal_eval function safely evaluates a string containing a Python literal or container display (like a list, dictionary, or string) and converts it into an actual Python object. This line assumes that skils is a string representation of a list and attempts to convert it into a Python list.
+    #         try:
+    #             skills_list = ast.literal_eval(skills)
                 
-                if not isinstance(skills_list, list):
-                    raise ValueError
+    #             if not isinstance(skills_list, list):
+    #                 raise ValueError
             
-            except (ValueError,SyntaxError):
-                raise serializers.ValidationError({'skills': 'Invalid format for skills. Must be a list or a string representation of a list.'})
+    #         except (ValueError,SyntaxError):
+    #             raise serializers.ValidationError({'skills': 'Invalid format for skills. Must be a list or a string representation of a list.'})
             
-            attrs['skills'] = skills_list
+    #         attrs['skills'] = skills_list
             
-        return attrs
-    
+    #     return attrs
+
+# Freelancer Details Serializer
 class FreelancerDetailsSerializer(serializers.ModelSerializer):
     
     user= UserRegistrationSerializer(read_only=True)
@@ -59,7 +61,8 @@ class FreelancerDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Freelancer
         fields = '__all__'
-        
+
+# Apply Project Serializer  
 class ApplyProjectSerializer(serializers.ModelSerializer):
     
     class Meta:
@@ -71,7 +74,12 @@ class ApplyProjectAndProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = ApplyProject
         fields = '__all__'
-  
+
+class FreelancerUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Freelancer
+        fields = '__all__'
+        
 # get all Frelancers Serializer 
 class GetDetailsOfFrelancersSerializer(serializers.ModelSerializer):
     class Meta:

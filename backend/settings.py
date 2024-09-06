@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "client",
     "project",
     "payment",
+    "manager",
     "common",
     
     "rest_framework",
@@ -52,7 +53,6 @@ INSTALLED_APPS = [
     'drf_yasg',
     'rest_framework_swagger',
     
-    # django extensions
     
 ]
 # say django to use account.user as the default user

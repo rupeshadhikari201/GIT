@@ -2,7 +2,7 @@ from django.db import models
 from register.models import User
 from django.contrib.postgres.fields import ArrayField
 
-# Create your models here.
+# Freelancer Model
 class Freelancer(models.Model):
     WHERE_DID_YOU_HEARD = (
         ('I' , 'Instagram'),

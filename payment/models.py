@@ -1,9 +1,6 @@
 from django.db import models
 from django.apps import apps
 
-# from project.models import Projects
-# from project import models as project_model
-
 class PaymentStatus(models.Model):
     PAYMENT_STATUS = (
         ('P', 'Paid'),
@@ -15,7 +12,7 @@ class PaymentStatus(models.Model):
     def __str__(self):
         return self.payment_status
     
-# Create your models here.
+
 class Payment(models.Model):
     # project_model = apps.get_model('project','Projects')
     amount = models.DecimalField(max_digits=10, decimal_places=2)

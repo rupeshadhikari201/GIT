@@ -1,6 +1,5 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
-from payment.models import PaymentStatus
 from register.renderers import UserRenderer
 from rest_framework.permissions import IsAuthenticated
 from project.models import ProjectFile, ProjectStatus, Projects
@@ -10,13 +9,13 @@ from rest_framework import status
 from rest_framework.response import Response
 
 
-# Create your views here.
+# API for ProjectCreation Serializer
 class ProjectCreationView(APIView):
     
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
     
-    def post(self,request,*args, **kwargs):
+    def post(self,request):
         data = request.data
         data['client'] = request.user.id
         print(data)
@@ -25,7 +24,8 @@ class ProjectCreationView(APIView):
             serialized.save()
             return Response({"msg":"Project Created!", "details": serialized.data}, status=status.HTTP_201_CREATED)
         return Response({"errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
-      
+   
+# API for ProjectUpdation Serializer 
 class ProjectUpdateView(APIView):
     
     renderer_classes = [UserRenderer]
@@ -64,6 +64,7 @@ class ProjectUpdateView(APIView):
             return Response({"msg": "Project Updated!", "details": serializered.data}, status=status.HTTP_200_OK)
         return Response({"errors": serializered.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+# API to FilterProject Serializer
 class PriceFilterView(APIView): 
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
@@ -84,7 +85,8 @@ class PriceFilterView(APIView):
              return Response({'serialized_data': serialized.data}, status=status.HTTP_201_CREATED)
         if(price_end == 0 and n_applicant < 0):
             return Response({"error":"Invalid filter"},status=status.HTTP_400_BAD_REQUEST)  
-            
+
+# API to SearchProject Serializer           
 class ProjectSearchView(APIView):
     renderer_classes = [UserRenderer]
     # permission_classes = [IsAuthenticated]
@@ -118,7 +120,7 @@ class ProjectSearchView(APIView):
         serialized = serializer.ProjectCreationSerializer(queryset, many=True)
         return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
     
-# API to get the unassigned projects for freelancers
+# API to GetUnassignedProject 
 class GetUnassingedProjects(APIView):
     
     renderer_classes = [UserRenderer]
@@ -152,7 +154,7 @@ class DeleteUnassignedProject(APIView):
         else:
             return Response({"msg": "Project Does Not Exists"}, status=status.HTTP_400_BAD_REQUEST )  
     
-# get the projects details by id
+# Get the Projects Details by Project Id
 class GetProjectDetailsByIdView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes =  [ IsAuthenticated]
@@ -163,14 +165,6 @@ class GetProjectDetailsByIdView(APIView):
         
         return Response({"serialized_data":serializered.data})
     
-    
-# API's to populate ProjectStatus
-class ProjectStatusView(generics.ListCreateAPIView):
-    
-    queryset = ProjectStatus.objects.all()
-    serializer_class = serializer.ProjectStatusSerializer
-
-     
 # API Database for holding project screenshots, doc and pdf files
 class ProjectFileView(APIView):
     # permission_classes = [IsAuthenticated]
@@ -189,4 +183,8 @@ class ProjectFileView(APIView):
             return Response({'msg': 'File uploaded successfully'}, status=status.HTTP_201_CREATED)
         return Response({'errors': serializered.errors}, status=status.HTTP_400_BAD_REQUEST)
     
-
+# API's to populate ProjectStatus
+class ProjectStatusView(generics.ListCreateAPIView):
+    
+    queryset = ProjectStatus.objects.all()
+    serializer_class = serializer.ProjectStatusSerializer

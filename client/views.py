@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from register.models import User
 from common.serializer import UserRegistrationSerializer
@@ -13,13 +12,13 @@ from .models import Client
 from client import serializer
 from rest_framework.response import Response
 
-# Create your views here.
+# API to Create Client
 class ClientCreationView(APIView):
     
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
     
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         serialized = ClientCreationSerializer(data=request.data, context={'request': request})
         if serialized.is_valid():
             # Get or create a client instance
@@ -33,7 +32,7 @@ class ClientCreationView(APIView):
             return Response({"msg":"Client Created!", "details": serialized.data}, status=status.HTTP_201_CREATED)
         return Response({"error": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
         
-    def get(self,request, *args, **kwargs):
+    def get(self,request):
         
         clients = Client.objects.all()
         serialized = ClientCreationSerializer(clients, many=True)
@@ -52,7 +51,7 @@ class GetClientDetailsById(APIView):
         queryset = UserRegistrationSerializer(user)
         return Response({'serialized_data': queryset.data})
     
-# Get all the Projects of the Specific Client
+# Get all the Projects of the Specific Client (Currentl Authorized)
 class GetClientProjects(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
@@ -67,7 +66,7 @@ class GetClientProjects(APIView):
 
         return Response(serialized.data)
 
-# Get User Details of a User Type Clients
+# Get User Details of a all User whose user_type is 'client' (User Details of a Client)
 class GetUserDetailsOfClients(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
@@ -77,7 +76,7 @@ class GetUserDetailsOfClients(APIView):
         serialized = GetDetailsOfFrelancersSerializer(clients_queryset, many=True)
         return Response({"data": serialized.data}, status=status.HTTP_200_OK)
     
-# api that return's clients project details by that client id
+# Get Client's Project details by Client Id
 class GetClientProjectsDetailByCliendId(APIView):
     
     renderer_classes = [UserRenderer]

@@ -6,7 +6,7 @@ class Client(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True,)
 
     class Meta:
-        swappable : "User"
+        swappable : True
+        
     def __str__(self):
-        # return self.user.username
         return self.user.email

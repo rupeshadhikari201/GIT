@@ -12,44 +12,25 @@ from register import authenticationview
 
 
 urlpatterns = [
-     path("user/", UserRegistrationView.as_view(), name="user"),
-     path('login/',UserLoginView.as_view(), name='login'),
+     path("user/", UserRegistrationView.as_view(), name="user_registration"),
+     path('login/',UserLoginView.as_view(), name='user_login'),
      path('profile/', UserProfileView.as_view(), name='profile'),
      path("change_password/", ChangePasswordView.as_view(), name='change_password'),
      path("reset_password/", SendPasswordResetEmailView.as_view(), name='reset_password'),
      path('update_password/<uid>/<token>/', UserPasswordUpdateView.as_view(), name='update_password'),
      path('send_verification/', SendUserVerificationLinkView.as_view(), name='send_verification'),
-     path('verify_email/<int>/<token>/', VerifyUserEmailView.as_view(), name="verify-email"),
+     path('verify_email/<uid>/<token>/', VerifyUserEmailView.as_view(), name="verify_email"),
+     path('get_all_users/', views.GetUserView.as_view(), name='get_all_users'),
+     path('get_user_details/<int:pk>/', views.GetUserView.as_view(), name='get_user_details'),
+     path('update_user_details/', views.UpdateUserView.as_view(), name='update_user_details'),
+     path('get_address/', AddressDetailView.as_view(), name='address-detail'),
+     
      path('logout/', LogoutView.as_view(), name='logout'),
-     
-     
      path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-     
-     path('get-user/', views.GetUserView.as_view(), name='get_user_list'),
-     path('get-user/<int:pk>/', views.GetUserView.as_view(), name='get_user_details'),
-     path('update-user/', views.UpdateUserView.as_view(), name='update_user_details'),
-     path('delete-user/<int:pk>/', views.GetUserView.as_view(), name='delete_user'),
-  
-     
-
-     
-     
-     
-     
      
      # for authentication
      path('user-authentication/', authenticationview.UserAutheniticationExampleView.as_view(), name='user-authentication'),
-     
-     # include
-     
-     
-     # path('', include(router.urls)),
-     
-
-     # address url
-      path('get_address/', AddressDetailView.as_view(), name='address-detail'),
-
-      
+    
 ] 
 
 urlpatterns = format_suffix_patterns(urlpatterns)

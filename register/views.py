@@ -7,13 +7,16 @@ from rest_framework import status
 from rest_framework import generics
 from rest_framework.views import APIView
 from project.models import ProjectStatus
-from project.serializer import ProjectStatusSerializer
 from client.models import Client
-from register.serializers import AddressSerializer,ChangePasswordSerializer,  FreelancerUpdateSerializer,  GetUserSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserLoginSerializer, UserProfileSerializer,  VerifyUserEmailSerializer
+from rest_framework import mixins
+from rest_framework import generics
+from register.serializer import AddressSerializer,ChangePasswordSerializer,  GetUserSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserLoginSerializer, UserProfileSerializer,  VerifyUserEmailSerializer
 from common.serializer import UserRegistrationSerializer
 from django.contrib.auth import authenticate, login, logout
 from register.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
+from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404, redirect, render
@@ -39,7 +42,7 @@ def get_tokens_for_user(user):
         'access': str(refresh.access_token),
     }
     
-# Create your views here.
+# API to Register User
 class UserRegistrationView(APIView):
     renderer_classes = [UserRenderer]
     
@@ -56,90 +59,79 @@ class UserRegistrationView(APIView):
            return Response({"token":token, 'msg': "User Registration Sucessfull", "user_id": user_id }, status=status.HTTP_201_CREATED) 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+# API to Login User
 class UserLoginView(APIView):
     renderer_classes = [UserRenderer]
 
-    def post(self,request,format=None):
+    def post(self,request):
         
-        print('the request is ', request)
-        print('the request data is ', request.data)
-        serializer = UserLoginSerializer(data=request.data)
+        serialized = UserLoginSerializer(data=request.data)
         # IF USER IS VERIFIED 
-        if serializer.is_valid(raise_exception=True):
-            email = serializer.data.get('email')
-            password = serializer.data.get('password')
-            is_Verified = serializer.data.get('is_verified')
-            # user_type  = serializer.data.get('user_type')
-            # created_at  = serializer.data.get('created_at')
-            print("data is verfied:",is_Verified)
+        if serialized.is_valid(raise_exception=True):
+            email = serialized.data.get('email')
+            password = serialized.data.get('password')
+            is_Verified = serialized.data.get('is_verified')
             user = authenticate(email=email,password=password)
-            # print("the user is ", user)
             if user is not None:
                 # IF USER IS VERIFIED 
-                print("check if verified : ",serializer.data.get('is_verified'))
-                if serializer.data.get('is_verified'):
+                if serialized.data.get('is_verified'):
                     # The signal is typically triggered by login() function from django.contrib.auth.
-                    login(request, user)  # Add this line to trigger the signal
+                    # Add this line to trigger the signal
+                    login(request, user)  
                     token = get_tokens_for_user(user)
-                    user_type = user.user_type  # Fetch user_type from user object
+                    # Fetch user_type ans user_id from user object
+                    user_type = user.user_type  
                     user_id = user.id 
                     # created_at = user.created_at  # Fetch created_at from user object
-                    return Response({'token': token, 'msg': "User Login Sucessfull😎", 'user_type': user_type,"user_id" : user_id}, status.HTTP_202_ACCEPTED)
+                    return Response({'token': token, 'msg': "User Login Sucessfull", 'user_type': user_type,"user_id" : user_id}, status.HTTP_202_ACCEPTED)
                 else:
                     return Response({'msg' : "User not verified"}, status=status.HTTP_401_UNAUTHORIZED)
             else:
                 return Response({'errors' : {'non_field_errors' : ['Email or Password not Valid']}}, status.HTTP_404_NOT_FOUND)
         else:
-            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)  
+            return Response(serialized.errors, status.HTTP_400_BAD_REQUEST)  
     
-    
-    
+# API to View Profie of Currently LoggedIn User
 class UserProfileView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
     
     def get(self, request, format=None):
-        user = request.user
-
-        serializer = UserProfileSerializer(request.user)
-        # response_data = {
-        #     # 'msg': f'The profile details of the user with user id {user.id} is : ',
-        #     # 'id': user.id,
-        #     # 'email': user.email,
-        #     # 'name': f'{user.firstname} {user.lastname}',
-        #     'data': serializer.data,
-        # }
-        return Response({"msg": serializer.data},status=status.HTTP_200_OK)
-                
+        print("request.user is: ", request.user)
+        print("request.data is: ", request.data)
+        serialized = UserProfileSerializer(request.user)
+        return Response({"msg": serialized.data},status=status.HTTP_200_OK)
+    
+# API to Change Password of the User        
 class ChangePasswordView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
     
     def post(self,request,format=None):
+        # The user is send as context to the ChangePassword Serializer
         user = request.user
-        serializer = ChangePasswordSerializer(data=request.data, context={'user':user})
-        if serializer.is_valid(raise_exception=True):
+        serialized = ChangePasswordSerializer(data=request.data, context={'user':user})
+        print(type(serialized))
+        print(serialized.fields)
+        if serialized.is_valid(raise_exception=True):
             return Response({'msg': "Password Changed"}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status.HTTP_401_UNAUTHORIZED)
-    
+        return Response(serialized.errors, status.HTTP_401_UNAUTHORIZED)
+
+# API to Send Password Reset Email   
 class SendPasswordResetEmailView(APIView):
     renderer_classes = [UserRenderer]
+    # This allows for flexibility in serving different data formats (like JSON, XML, etc.) to different clients.
+    # When format=None, Django REST Framework will attempt to determine the appropriate format based on the Accept header in the client's request.
     def post(self, request, format=None):
-        serializer = SendPasswordResetEmailSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
+        serialized = SendPasswordResetEmailSerializer(data=request.data)
+        if serialized.is_valid(raise_exception=True):
             return Response({"msg" : "Password Reset Link was sent to your provided Email. Please Check your Email."}, status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+        return Response(serialized.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# API to Update Password         
 class UserPasswordUpdateView(APIView):
     renderer_classes = [UserRenderer]
-    
-    '''
-        def get(self,uid,token):
-        uid token
-        if valid
-        return render('changepassword.html',daat)
-    '''
+
     def get(self,request, uid, token):
         print(request)
         print(uid)
@@ -151,20 +143,15 @@ class UserPasswordUpdateView(APIView):
             'url' : 'http://localhost:8000' if os.getenv('PR') == 'False' else 'https://gokap.onrender.com'
         }
         
-        return render(request= request,template_name='reset_password.html', context=context)
-        # return redirect('/reset_password.html')
+        return render(request=request,template_name='reset_password.html', context=context)
     
     def post(self, request, uid, token ,format=None):
-        serializer = UserPasswordUpdateSerializer(context = {'id':uid, 'token': token},data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            return Response({"msg " : "Password is Updated in the Database. 😊"}, status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serialized = UserPasswordUpdateSerializer(context = {'id':uid, 'token': token},data=request.data)
+        if serialized.is_valid(raise_exception=True):
+            return Response({"msg" : "Password is Updated in the Database."}, status.HTTP_200_OK)
+        return Response({"errors" : serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
     
-           
-        
-        
-
-
+# API to Send User Verification Link
 class SendUserVerificationLinkView(APIView): 
     
     renderer_classes = [UserRenderer] 
@@ -175,20 +162,23 @@ class SendUserVerificationLinkView(APIView):
             return Response({"msg" : "Email Verification Link have been sent"}, status=status.HTTP_200_OK)
         return Response({'msg': "Error", "errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
     
-# Verify UserEmail
+# API to Verify User Email
 class VerifyUserEmailView(APIView):
     
     renderer_classes = [UserRenderer]
     
-    def get(self, request,*args, **kwargs):
+    def get(self, request, *args, **kwargs):
+        print("args from VerifyUserEmailVie : ", args)
+        print("kwargs from VerifyUserEmailVie : ", kwargs)
         string = str(request)  
         id = string.split("/")
         uid = smart_str(urlsafe_base64_decode(id[4]))
+        
         context = {
             'id' : id[4], 
             'token' : id[5]
         }
-        # print(context)
+
         request.data['id'] = uid
         request.data['firstname'] = 'rupesh'
 
@@ -196,12 +186,9 @@ class VerifyUserEmailView(APIView):
         
         if serialized.is_valid():
             return render(request=request,template_name='verified.html')            
-
         return render(request=request, template_name='404.html')
-        
-from rest_framework import mixins
-from rest_framework import generics
 
+# API to Get All User, Details of a User if id is Provide
 class GetUserView(mixins.ListModelMixin,
               mixins.CreateModelMixin,
               mixins.RetrieveModelMixin,
@@ -215,26 +202,13 @@ class GetUserView(mixins.ListModelMixin,
     
     def get(self, request, *args, **kwargs):
         
-        print('the pk is : ', kwargs.get('pk'))
+        # Check if 'pk' is in kwargs to determine whether to retrieve a single user or all users
         if 'pk' in kwargs:
             return self.retrieve(request, kwargs['pk'])
         else:
             return self.list(request)
-    
-    def post(self, request, *args, **kwargs):
-        return self.create(request,*args, **kwargs)
-    
-    
-    def delete(self, request, *args, **kwargs):
-        print(f"the user {kwargs['pk']} is going to be deleted")
-        print(f"the user {kwargs.get('pk')} is going to be deleted")
-        response =  super().destroy(request, *args, **kwargs)
-        print("the response is : ", response)
-        response.data['msg'] = "User Deletion Sucessfull"
-        return Response({"msg":"User deleted success"},status=status.HTTP_200_OK)
-    
-
-# Update User
+ 
+# API To Update User Details (First Name and Last Name)
 class UpdateUserView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
@@ -243,13 +217,13 @@ class UpdateUserView(APIView):
     def patch(self, request):
         user_queryset = User.objects.get(id=request.user.id)
         print("user_queryset", user_queryset)
-        last_updated = user_queryset.updated_at  # Assuming you have a field to track the last update time
+        # Get the last UpdatedTime
+        last_updated = user_queryset.updated_at  
         current_time = timezone.now()
         
         if last_updated and (current_time - last_updated).days < 7:
-            return Response({'error': f'Your name was updated on : { last_updated }You can only update your name only after a week.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': f'Your name was updated on : { last_updated } \n You can only update your name only after a week.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        print(request.data)
         user_queryset.firstname = request.data['firstname']
         user_queryset.lastname = request.data['lastname']
         user_queryset.last_updated = current_time  # Update the last updated time
@@ -257,11 +231,7 @@ class UpdateUserView(APIView):
         
         return Response({'msg': 'User Update Sucessfull'}, status=status.HTTP_200_OK)
     
-
-
-from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
-
+# API TO Logout User
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -282,8 +252,7 @@ class LogoutView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
-       
-# views for addresss
+# API to get, post, update and Delete Address
 class AddressDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
