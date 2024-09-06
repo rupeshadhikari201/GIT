@@ -75,14 +75,14 @@ class ApplyProject(models.Model):
         ('RE', 'Rejected'),
     ]
     
-    frelancer = models.ForeignKey(Freelancer, on_delete=models.CASCADE)
+    frelancer = models.ForeignKey(Freelancer, on_delete=models.CASCADE,null=False)
     project = models.ForeignKey(Projects, on_delete=models.CASCADE)
     applied_at = models.DateTimeField(auto_now_add=True)
     proposal = models.TextField(blank=False)
     status = models.CharField(max_length=2, choices=STATUS_CHOICES, default='PA')
     
     def __str__(self):
-        return f'Project id : {self.project_id}'
+        return f'Project id : {self.project}'
       
 # Model to store project screenshot
 class ProjectFile(models.Model):
