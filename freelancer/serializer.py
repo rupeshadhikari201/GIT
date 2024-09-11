@@ -64,7 +64,12 @@ class FreelancerDetailsSerializer(serializers.ModelSerializer):
 
 # Apply Project Serializer  
 class ApplyProjectSerializer(serializers.ModelSerializer):
-    frelancer_id = FreelancerDetailsSerializer(read_only=True)
+    class Meta:
+        model = ApplyProject
+        fields = '__all__'
+
+class ApplyedProjectAndFreelancerSerializer(serializers.ModelSerializer):
+    frelancer = FreelancerDetailsSerializer(read_only=True)
     class Meta:
         model = ApplyProject
         fields = '__all__'
