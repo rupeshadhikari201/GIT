@@ -53,6 +53,9 @@ INSTALLED_APPS = [
     'drf_yasg',
     'rest_framework_swagger',
     
+    # stipe
+    'stripe',
+    
     
 ]
 # say django to use account.user as the default user

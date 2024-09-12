@@ -106,7 +106,7 @@ class SendPasswordResetEmailSerializer(serializers.ModelSerializer):
             # 4. Generate the reset link
             baseUrl = 'http://localhost:8000' if os.getenv('PR') == 'False' else 'https://gokap.onrender.com'
             print(os.getenv('PR'))
-            link = baseUrl + "/api/register/update_password/" + uid +"/" + token
+            link = baseUrl + "/api/user/update_password/" + uid +"/" + token
             print("Password Reset Link : ", link)
             print("The target email is : ", user.email)
             subject = 'Password Reset'
@@ -175,7 +175,7 @@ class SendUserVerificationSerializer(serializers.ModelSerializer):
             token = PasswordResetTokenGenerator().make_token(user) 
             # 4. generate the reset link
             baseUrl = 'http://localhost:8000' if os.getenv('PR') == 'False' else 'https://gokap.onrender.com'
-            link =  baseUrl + "/api/register/verify_email/" + uid +"/" + token
+            link =  baseUrl + "/api/user/verify_email/" + uid +"/" + token
             print("Password Reset Link : ", link)
             print("The target email is : ", user.email)
               

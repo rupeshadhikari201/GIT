@@ -217,7 +217,7 @@ class UpdateUserView(APIView):
         current_time = timezone.now()
 
         if last_updated and (current_time - last_updated).days < 7:
-            return Response({'error': f'Your name was updated on : { last_updated } \n You can only update your name only after a week.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'errors': f'Your name was updated on : { last_updated } \n You can only update your name only after a week.'}, status=status.HTTP_400_BAD_REQUEST)
         
         user_queryset.firstname = request.data['firstname']
         user_queryset.lastname = request.data['lastname']
