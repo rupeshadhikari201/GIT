@@ -1,8 +1,7 @@
 import os
 from django.http import JsonResponse
-from django.shortcuts import render
 from rest_framework.response import Response
-from freelancer.serializer import ApplyProjectSerializer, ApplyedProjectAndFreelancerSerializer, FreelancerDetailsSerializer
+from freelancer.serializer import  ApplyedProjectAndFreelancerSerializer
 from project.models import ApplyProject, Projects, ProjectsAssigned
 from project.serializer import ProjectCreationSerializer
 from register.models import User
@@ -12,6 +11,8 @@ from register.renderers import UserRenderer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 # Create your views here.
 class ProjectAssignView(APIView):
     
@@ -146,13 +147,32 @@ class SendInvitaionToFreelancerView(APIView):
             if not email or not project_id:
                return Response({'errors':'email and project_id is required'},status=status.HTTP_400_BAD_REQUEST)
             user = User.objects.get(email=email)
+            project = Projects.objects.get(pk=project_id)
             baseUrl = 'https://freelance.gokapinnotech.com'
-            link = baseUrl + "/agent/dashboard/apply/" + str(project_id)
+            project_link = baseUrl + "/agent/dashboard/apply/" + str(project_id)
             subject = 'Invitation'
-            body  = f'Dear, {user.firstname} \n you are invited to work on project for having this project. {link}'
+            html_message = render_to_string('invitation_email.html', {
+                'project': project,
+                'project_link': project_link
+            })
+            # Create plain text version of the email
+            body  = f"""
+          Dear { user.firstname },
+
+                You have been invited to join a new project on our platform. Here are the details:
+                { project.title }
+                Description: {project.description }
+                Budget: ${ project.project_price }
+                To view the project and accept the invitation, please visit the following link:
+                { project_link }
+                If you have any questions, please don't hesitate to contact us.
+                Best regards,
+                Gokap team
+                This is an automated message, please do not reply directly to this email.
+                            """
             send_from = "gokap@gokapinnotech.com"
             send_to = [user.email]
-            send_mail(subject,body,send_from,send_to)
+            send_mail(subject,body,send_from,send_to,html_message=html_message)
             return Response({"msg":"success"},status=status.HTTP_200_OK)
         except Exception as e: 
             return Response({"errors":str(e)},status=status.HTTP_400_BAD_REQUEST)

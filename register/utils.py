@@ -13,6 +13,6 @@ class Util:
             )
             email.send()
         except Exception as e:
-            print(f"Error sending email: {e}")
+            print(f"Error sending email: {e}")
             return e
             

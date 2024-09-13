@@ -2,14 +2,12 @@ from django.utils.encoding import smart_str, force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework import serializers
-from freelancer.serializer import FreelancerDetailsSerializer
-from project.models import ApplyProject
-from freelancer.models import Freelancer
 from register.models import  User, Address
-from register.utils import Util
 from django.core.mail import send_mail
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 import os
 
 # API Serializer to Register User  
@@ -48,8 +46,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
         try:
             user = User.objects.get(email=email)
             attrs['is_verified'] = user.is_verified
-            attrs['id'] = user.id
-            print(attrs)
+            attrs['id'] = user.pk
             return attrs
         
         except User.DoesNotExist:
@@ -94,8 +91,6 @@ class SendPasswordResetEmailSerializer(serializers.ModelSerializer):
         # Check if the user with the provided email exists in our database 
         email = attrs.get('email')
         if User.objects.filter(email=email).exists():
-            # If User exists then send reset link
-            # 1. Get the User
             user = User.objects.get(email=email)
             # 2. Get the user id, and encode it using 'urlsafe_base64_encode
             uid = urlsafe_base64_encode(force_bytes(user.id)) 
@@ -161,7 +156,6 @@ class SendUserVerificationSerializer(serializers.ModelSerializer):
         model = User
         fields = ['email']
     
-    
     def validate(self, attrs):
         # Check if the user with the provided email exists in our database or 
         email = attrs.get('email')
@@ -175,11 +169,26 @@ class SendUserVerificationSerializer(serializers.ModelSerializer):
             # 4. generate the reset link
             baseUrl = 'http://localhost:8000' if os.getenv('PR') == 'False' else 'https://gokap.onrender.com'
             link =  baseUrl + "/api/user/verify_email/" + uid +"/" + token
+            # Render HTML email template
+            html_message = render_to_string('verification_email.html', {
+                'user': user,
+                'verification_link': link
+            })
+
+            # Create plain text version of the email
+            plain_message = strip_tags(html_message)
             subject = 'Verify Your Email'
-            body  = f'Dear, {user.firstname} please verify the email using following link. {link}'
+            body  = f"""
+            Dear {user.firstname},
+            Please verify your email address by clicking on the following link:
+            {link}
+            If you did not request this verification, please ignore this email.
+            Best regards,
+            Gokap Team.
+            """
             send_from = "gokap@gokapinnotech.com"
             send_to = [user.email]
-            send_mail(subject,body,send_from,send_to)
+            send_mail(subject,body,send_from,send_to,html_message=html_message)
             return attrs
         else: 
             raise serializers.ValidationError("The email is not Registered. Please register Yourself.")

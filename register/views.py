@@ -67,7 +67,6 @@ class UserLoginView(APIView):
         if serialized.is_valid(raise_exception=True):
             email = serialized.data.get('email')
             password = serialized.data.get('password')
-            is_Verified = serialized.data.get('is_verified')
             user = authenticate(email=email,password=password)
             if user is not None:
                 # IF USER IS VERIFIED 
@@ -84,7 +83,7 @@ class UserLoginView(APIView):
                 else:
                     return Response({'errors' : "User not verified"}, status=status.HTTP_401_UNAUTHORIZED)
             else:
-                return Response({'errors' : {'non_field_errors' : ['Email or Password not Valid']}}, status.HTTP_404_NOT_FOUND)
+                return Response({'errors' : {'non_field_errors' : 'Email or Password not Valid'}}, status.HTTP_404_NOT_FOUND)
         else:
             return Response(serialized.errors, status.HTTP_400_BAD_REQUEST)  
     
