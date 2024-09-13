@@ -22,13 +22,8 @@ class FreelancerCreationView(APIView):
         data = request.data.copy()
         user_id = request.user.id
         data['user'] = user_id
-        print("the final data is : ", data)
-        
-        # This line creates an instance of the FreelancerSerializer class. 
-        # It takes the request.data as the data to be serialized.
         serialized = FreelancerCreationSerializer(data=data)
         
-        # This line checks whether the data provided to the serializer is valid according to the serializer's validation rules. The is_valid() method is a DRF method that triggers the validation process.
         if serialized.is_valid():
             # If the data is valid, this line saves the data to the database.
             serialized.save()
@@ -56,7 +51,7 @@ class FreelancerDetails(APIView):
       try:
           freelancer_details= Freelancer.objects.get(user=user.id)
       except Freelancer.DoesNotExist:
-          return Response({'error': 'Freelancer not found'}, status=status.HTTP_404_NOT_FOUND)
+          return Response({'errors': 'Freelancer not found'}, status=status.HTTP_404_NOT_FOUND)
 
       serialized= FreelancerDetailsSerializer(freelancer_details)
       return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
@@ -74,7 +69,7 @@ class UpdateFreelancerView(APIView):
         serialized = FreelancerCreationSerializer(freelancer,data=data,partial=True)
         if serialized.is_valid():
             serialized.save()
-            return Response({'msg':"success", 'serialized_data': serialized.data}, status=status.HTTP_200_OK)
+            return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
         return Response(serialized.errors, status=status.HTTP_400_BAD_REQUEST)  
         
     def patch(self, request):
@@ -97,7 +92,7 @@ class ApplyProjectView(APIView):
             project.applied_count += 1
             project.save()
             return Response({"msg": "Project Applied Sucess"}, status=status.HTTP_200_OK)
-        return Response({"error": serialized.errors}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"errors": serialized.errors}, status=status.HTTP_404_NOT_FOUND)
 
 # GET applied Freelancers details For any project_id
 class AppliedFreelancersView(APIView):
@@ -115,7 +110,7 @@ class AppliedFreelancersView(APIView):
                     'details': serializer.ApplyProjectSerializer(application).data
                 })
                 
-            return Response({"freelancers": freelancer_data}, status=status.HTTP_200_OK)
+            return Response({"serialized_data": freelancer_data}, status=status.HTTP_200_OK)
         except Exception as e :
             return Response({"error":f"{e}"},status=status.HTTP_400_BAD_REQUEST)
 
@@ -160,6 +155,7 @@ class GetAppliedProjectById(APIView):
                 return Response({'errors' : str(e)},status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'errors': str(e),}, status=status.HTTP_404_NOT_FOUND)
+        
 # Search API based on Freelancer Skills
 class FreelancerSearchView(APIView):
     
@@ -177,11 +173,7 @@ class FreelancerSearchView(APIView):
             skill_query = Q()
             for skill in skills:
                 skill_query |= Q(skills__icontains=skill.strip())
-                # skills__icontains is a Django lookup that checks if the skills field contains the given value, case-insensitive.
-                # strip() removes any leading or trailing whitespace from the skill.
-                # The |= operator is used to combine this new condition with the existing skill_query using OR logic.
             queryset = queryset.filter(skill_query)
-            
             
         if languages and  languages != ['']:
             language_query = Q()
@@ -196,17 +188,8 @@ class FreelancerSearchView(APIView):
         if not (skills or languages or profession):
             return Response({"error": "No search criteria provided"}, status=400)
         
-        
-        # Create a Q object for each skill
-        # It uses __icontains for case-insensitive partial matching on all fields.
-        # query = Q()
-        # for skill in skills:
-        #     query |= Q(skills__icontains=skill)
-
-        print("Freelancer Queryset : ", queryset.query)
         serializer = FreelancerCreationSerializer(queryset, many=True)
-        print("Serializer : ", serializer)
-        return Response(serializer.data)
+        return Response({"serialized_data":serializer.data})
 
 # get all the details of all the frelancers
 class GetDetailsOfFrelancers(APIView):

@@ -165,20 +165,16 @@ class SendUserVerificationSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         # Check if the user with the provided email exists in our database or 
         email = attrs.get('email')
+        if email:
+            email = email.lower()
+        print(email)
         if User.objects.filter(email=email).exists():
-            # if exists then send reset link
-            # 1. get the user
             user = User.objects.get(email=email)
-            # 2. get the user id, and encode it for privacy purpose
             uid = urlsafe_base64_encode(force_bytes(user.id)) 
-            # 3. generate the token for that user
             token = PasswordResetTokenGenerator().make_token(user) 
             # 4. generate the reset link
             baseUrl = 'http://localhost:8000' if os.getenv('PR') == 'False' else 'https://gokap.onrender.com'
             link =  baseUrl + "/api/user/verify_email/" + uid +"/" + token
-            print("Password Reset Link : ", link)
-            print("The target email is : ", user.email)
-              
             subject = 'Verify Your Email'
             body  = f'Dear, {user.firstname} please verify the email using following link. {link}'
             send_from = "gokap@gokapinnotech.com"

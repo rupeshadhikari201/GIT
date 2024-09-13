@@ -51,6 +51,7 @@ requests-toolbelt==1.0.0
 rich==13.7.1
 rpds-py==0.18.1
 simplejson==3.19.2
+stripe==10.11.0
 sqlparse==0.4.4
 swagger-spec-validator==3.0.3
 typing_extensions==4.10.0

@@ -63,7 +63,7 @@ class GetClientProjects(APIView):
         return Response({'serialized_data':serialized.data},status=status.HTTP_200_OK)
 
 # Get User Details of a all User whose user_type is 'client' (User Details of a Client)
-class GetUserDetailsOfClients(APIView):
+class GetAllClient(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
     

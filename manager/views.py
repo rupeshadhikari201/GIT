@@ -83,15 +83,14 @@ class GetAssignedFreelancerUsingProjectId(APIView):
     def get(self,request, project_id):
         try:
             project_ids_queryset = ProjectsAssigned.objects.filter(project=project_id)
-            print(project_ids_queryset) 
             freelancer_id_list = []
             for i in project_ids_queryset:
                 freelancer_id_list.append(i.frelancer)
-            applied_queryset = ApplyProject.objects.filter(project=project_id,frelancer__in=freelancer_id_list)
+            applied_queryset = ApplyProject.objects.filter(project=project_id,frelancer__in=freelancer_id_list).select_related('frelancer')
             result = []
             for applied in applied_queryset:
                 result.append({
-                    "details":ApplyProjectSerializer(applied).data
+                    "details":ApplyedProjectAndFreelancerSerializer(applied).data
                 })
 
             return Response({"serialized_data":result}, status=status.HTTP_200_OK)

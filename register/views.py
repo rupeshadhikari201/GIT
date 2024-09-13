@@ -94,10 +94,8 @@ class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
-        print("request.user is: ", request.user)
-        print("request.data is: ", request.data)
         serialized = UserProfileSerializer(request.user)
-        return Response({"msg": serialized.data},status=status.HTTP_200_OK)
+        return Response({"serialized_data": serialized.data},status=status.HTTP_200_OK)
     
 # API to Change Password of the User        
 class ChangePasswordView(APIView):
@@ -108,8 +106,6 @@ class ChangePasswordView(APIView):
         # The user is send as context to the ChangePassword Serializer
         user = request.user
         serialized = ChangePasswordSerializer(data=request.data, context={'user':user})
-        print(type(serialized))
-        print(serialized.fields)
         if serialized.is_valid(raise_exception=True):
             return Response({'msg': "Password Changed"}, status=status.HTTP_200_OK)
         return Response(serialized.errors, status.HTTP_401_UNAUTHORIZED)
@@ -130,10 +126,6 @@ class UserPasswordUpdateView(APIView):
     renderer_classes = [UserRenderer]
 
     def get(self,request, uid, token):
-        print(request)
-        print(uid)
-        print(token)
-
         context = {
             'id' : uid,
             'token' : token,
@@ -146,7 +138,7 @@ class UserPasswordUpdateView(APIView):
         serialized = UserPasswordUpdateSerializer(context = {'id':uid, 'token': token},data=request.data)
         if serialized.is_valid(raise_exception=True):
             return Response({"msg" : "Password is Updated in the Database."}, status.HTTP_200_OK)
-        return Response({"errors" : serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response( serialized.errors, status=status.HTTP_400_BAD_REQUEST)
     
 # API to Send User Verification Link
 class SendUserVerificationLinkView(APIView): 
@@ -157,7 +149,7 @@ class SendUserVerificationLinkView(APIView):
         serialized = SendUserVerificationSerializer(data=request.data)
         if serialized.is_valid():
             return Response({"msg" : "Email Verification Link have been sent"}, status=status.HTTP_200_OK)
-        return Response({'msg': "Error", "errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response( serialized.errors, status=status.HTTP_400_BAD_REQUEST)
     
 # API to Verify User Email
 class VerifyUserEmailView(APIView):
@@ -165,8 +157,6 @@ class VerifyUserEmailView(APIView):
     renderer_classes = [UserRenderer]
     
     def get(self, request, *args, **kwargs):
-        print("args from VerifyUserEmailVie : ", args)
-        print("kwargs from VerifyUserEmailVie : ", kwargs)
         string = str(request)  
         id = string.split("/")
         uid = smart_str(urlsafe_base64_decode(id[4]))
@@ -194,7 +184,6 @@ class GetUserView(mixins.ListModelMixin,
 
     queryset = User.objects.all()
     serializer_class = GetUserSerializer
-
     def get(self, request, *args, **kwargs):
         
         # Check if 'pk' is in kwargs to determine whether to retrieve a single user or all users
@@ -211,7 +200,6 @@ class UpdateUserView(APIView):
     # get the user
     def patch(self, request):
         user_queryset = User.objects.get(id=request.user.id)
-        print("user_queryset", user_queryset)
         # Get the last UpdatedTime
         last_updated = user_queryset.updated_at  
         current_time = timezone.now()
