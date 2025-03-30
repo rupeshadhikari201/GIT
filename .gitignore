@@ -4,3 +4,17 @@ v4/
 .env
 readme.md
 env/
+# Django #
+*.log
+*.pot
+*.pyc
+__pycache__
+backend/__pycache__
+client/__pycache__
+dbbackend/__pycache__
+common/__pycache__
+manager/__pycache__
+payments/__pycache__
+registration/__pycache__
+db.sqlite3
+media
