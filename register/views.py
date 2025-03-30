@@ -61,18 +61,17 @@ class UserLoginView(APIView):
     renderer_classes = [UserRenderer]
 
     def post(self,request):
-        
+        #deserializing
         serialized = UserLoginSerializer(data=request.data)
-        # IF USER IS VERIFIED 
         if serialized.is_valid(raise_exception=True):
             email = serialized.data.get('email')
             password = serialized.data.get('password')
             user = authenticate(email=email,password=password)
             if user is not None:
+                print("from user login view",user)
                 # IF USER IS VERIFIED 
-                if serialized.data.get('is_verified'):
+                if serialized.data.get ('is_verified'):
                     # The signal is typically triggered by login() function from django.contrib.auth.
-                    # Add this line to trigger the signal
                     login(request, user)  
                     token = get_tokens_for_user(user)
                     # Fetch user_type ans user_id from user object
@@ -83,7 +82,7 @@ class UserLoginView(APIView):
                 else:
                     return Response({'errors' : "User not verified"}, status=status.HTTP_401_UNAUTHORIZED)
             else:
-                return Response({'errors' : {'non_field_errors' : 'Email or Password not Valid'}}, status.HTTP_404_NOT_FOUND)
+                return Response({'errors' : {'non_field_errors' : 'Email or Password not Valid'}}, status.HTTP_403_FORBIDDEN)
         else:
             return Response(serialized.errors, status.HTTP_400_BAD_REQUEST)  
     
