@@ -25,7 +25,7 @@ import logging
 import os
 from django.utils.functional import empty
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
-
+import requests as req
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,6 @@ class UserRegistrationView(APIView):
 # API to Login User
 class UserLoginView(APIView):
     renderer_classes = [UserRenderer]
-
     def post(self,request):
         #deserializing
         serialized = UserLoginSerializer(data=request.data)
@@ -85,7 +84,54 @@ class UserLoginView(APIView):
                 return Response({'errors' : {'non_field_errors' : 'Email or Password not Valid'}}, status.HTTP_403_FORBIDDEN)
         else:
             return Response(serialized.errors, status.HTTP_400_BAD_REQUEST)  
-    
+        
+class UserGoogleLoginView(APIView):
+    renderer_classes = [UserRenderer]
+    def post(self, request):
+        #check user google id token
+        access_token = request.data.get('token')
+        if not access_token:
+            return Response({'error': 'No token provided'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            headers = {
+                    "Authorization": f"Bearer {access_token}"
+                }
+            user_data = req.get("https://www.googleapis.com/oauth2/v3/userinfo", headers=headers).json()
+            print("user data",user_data)
+            if 'error' in user_data:
+                return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+            email = user_data.get('email')
+            if not email:
+                return Response({'error': 'No email found in token'}, status=status.HTTP_400_BAD_REQUEST)       
+            
+            # Check if user exists in the database  
+            user = User.objects.filter(email=email).first()
+            if not user:
+                # If user does not exist, create a new user
+                user = User.objects.create_user(email=email, password=None, is_verified=True,auth_type='google')
+                user.save()
+            # Generate JWT tokens for the user
+            token = get_tokens_for_user(user)   
+            # Log the user in
+            login(request, user)
+            # Return the token and user type in the response    
+            return Response({'token': token, 'msg': "User Login Sucessfull", 'user_type': user.user_type,"user_id" : user.pk}, status=status.HTTP_200_OK)
+        except req.exceptions.RequestException as e:
+            return Response({'errors': 'Error verifying token'}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError as e:
+            return Response({'errors': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+        except TokenError as e:
+            return Response({'errors': 'Token error'}, status=status.HTTP_400_BAD_REQUEST)
+        except AttributeError as e:
+            return Response({'errors': 'Invalid token structure'}, status=status.HTTP_400_BAD_REQUEST)
+        except KeyError as e:
+            return Response({'errors': 'Missing key in token'}, status=status.HTTP_400_BAD_REQUEST)
+        except TypeError as e:
+            return Response({'errors': 'Invalid token type'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+
 # API to View Profie of Currently LoggedIn User
 class UserProfileView(APIView):
     renderer_classes = [UserRenderer]
@@ -228,7 +274,7 @@ class LogoutView(APIView):
 
             return Response({"success": "User logged out successfully"}, status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"errors": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 # API to get, post, update and Delete Address
 class AddressDetailView(APIView):

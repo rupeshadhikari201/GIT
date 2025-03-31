@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+from django.contrib.auth.models import BaseUserManager
 
 class UserManager(BaseUserManager):
     
@@ -39,8 +39,7 @@ class UserManager(BaseUserManager):
         return user
 
 # Custom Model
-class User(AbstractBaseUser):
-    
+class User(models.Model):
     firstname = models.CharField(max_length=255)
     lastname = models.CharField(max_length=255)
     email = models.EmailField(
@@ -49,18 +48,14 @@ class User(AbstractBaseUser):
         unique=True,
     )   
     password = models.CharField(max_length=255)
-    
     user_type = models.CharField(max_length=255)
     is_verified = models.BooleanField(default=False, verbose_name='email verified')
-    
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add =True)
     updated_at = models.DateTimeField(auto_now=True) 
-    
-
-    objects = UserManager()
-
+    auth_type = models.CharField(max_length=255, default='email', blank=True, null=True) # for social auth type
+    # objects = UserManager()
     USERNAME_FIELD = "email"    #takes email to login user
     REQUIRED_FIELDS = ["firstname", "lastname", "password",]
 
@@ -76,7 +71,13 @@ class User(AbstractBaseUser):
         "Does the user have permissions to view the app `app_label`?"
         # Simplest possible answer: Yes, always
         return True
+    @property
+    def is_anonymous(self):
+        return False  # All users are considered authenticated
 
+    @property
+    def is_authenticated(self):
+        return True
     @property
     def is_staff(self):
         "Is the user a member of staff?"

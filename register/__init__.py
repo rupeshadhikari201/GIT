@@ -1,1 +1,1 @@
-default_app_config = "register.apps.RegisterConfig"
+# default_app_config = "register.apps.RegisterConfig"

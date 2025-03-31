@@ -14,7 +14,9 @@ client/__pycache__
 dbbackend/__pycache__
 common/__pycache__
 manager/__pycache__
-payments/__pycache__
-registration/__pycache__
+payment/__pycache__
+register/__pycache__
+freelancer/__pycache__
 db.sqlite3
 media
+backup.sql
