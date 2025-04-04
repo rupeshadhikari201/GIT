@@ -68,7 +68,6 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
         fields = ['password', 'cnfpassword']
         
     def validate(self, attrs):
-        print("validate is called : ", attrs)
         password = attrs.get('password')
         cnfpassword = attrs.get('cnfpassword')
         if password != cnfpassword:
@@ -94,16 +93,11 @@ class SendPasswordResetEmailSerializer(serializers.ModelSerializer):
             user = User.objects.get(email=email)
             # 2. Get the user id, and encode it using 'urlsafe_base64_encode
             uid = urlsafe_base64_encode(force_bytes(user.id)) 
-            print("Encoded Uid is: ", uid)
             # 3. Generate the token for that user
             token = PasswordResetTokenGenerator().make_token(user)
-            print("Password Reset Token : ", token)
             # 4. Generate the reset link
             baseUrl = 'http://localhost:8000' if os.getenv('PR') == 'False' else 'https://gokap.onrender.com'
-            print(os.getenv('PR'))
             link = baseUrl + "/api/user/update_password/" + uid +"/" + token
-            print("Password Reset Link : ", link)
-            print("The target email is : ", user.email)
             subject = 'Password Reset'
             body  = f'Dear, {user.firstname} Please reset the email using following link. {link}'
             send_from = "gokap@gokapinnotech.com"

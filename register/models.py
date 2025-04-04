@@ -55,9 +55,11 @@ class User(models.Model):
     created_at = models.DateTimeField(auto_now_add =True)
     updated_at = models.DateTimeField(auto_now=True) 
     auth_type = models.CharField(max_length=255, default='email', blank=True, null=True) # for social auth type
+    profile_pic = models.TextField(blank=True, null=True) # for social auth type
     # objects = UserManager()
     USERNAME_FIELD = "email"    #takes email to login user
     REQUIRED_FIELDS = ["firstname", "lastname", "password",]
+
 
     def __str__(self):
         return self.email

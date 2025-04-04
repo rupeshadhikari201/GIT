@@ -26,7 +26,7 @@ import os
 from django.utils.functional import empty
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 import requests as req
-
+from django.core.mail import send_mail
 logger = logging.getLogger(__name__)
 
 
@@ -67,7 +67,6 @@ class UserLoginView(APIView):
             password = serialized.data.get('password')
             user = authenticate(email=email,password=password)
             if user is not None:
-                print("from user login view",user)
                 # IF USER IS VERIFIED 
                 if serialized.data.get ('is_verified'):
                     # The signal is typically triggered by login() function from django.contrib.auth.
@@ -81,7 +80,7 @@ class UserLoginView(APIView):
                 else:
                     return Response({'errors' : "User not verified"}, status=status.HTTP_401_UNAUTHORIZED)
             else:
-                return Response({'errors' : {'non_field_errors' : 'Email or Password not Valid'}}, status.HTTP_403_FORBIDDEN)
+                return Response({'errors' : "Email or Password not Valid"}, status.HTTP_403_FORBIDDEN)
         else:
             return Response(serialized.errors, status.HTTP_400_BAD_REQUEST)  
         
@@ -97,7 +96,7 @@ class UserGoogleLoginView(APIView):
                     "Authorization": f"Bearer {access_token}"
                 }
             user_data = req.get("https://www.googleapis.com/oauth2/v3/userinfo", headers=headers).json()
-            print("user data",user_data)
+            #user_data = {sub,name,given_name,family_name,picture,email,email_verified,picture}
             if 'error' in user_data:
                 return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
             email = user_data.get('email')
@@ -108,7 +107,27 @@ class UserGoogleLoginView(APIView):
             user = User.objects.filter(email=email).first()
             if not user:
                 # If user does not exist, create a new user
-                user = User.objects.create_user(email=email, password=None, is_verified=True,auth_type='google')
+                user = User.objects.create_user(email=email, password=None, is_verified=True,auth_type='google',proflie_pic=user_data.get('picture'))
+                user.save()
+                subject = 'Welcome to GokapinnoTech!'
+                #send welcome email
+                body = f"""
+                Dear {user.firstname},  
+
+                Welcome to GokapinnoTech! 🎉  
+
+                We’re excited to have you on board. Our platform connects clients and freelancers to work together.  
+
+                Get started by exploring our features and setting up your profile. If you have any questions, feel free to reach out.  
+
+                Best regards,  
+                The GokapinnoTech Team  
+                """
+                send_from = "gokap@gokapinnotech.com"
+                send_to = [user.email]
+                send_mail(subject,body,send_from,send_to)
+            if user.is_verified == False:
+                user.is_verified = True
                 user.save()
             # Generate JWT tokens for the user
             token = get_tokens_for_user(user)   
@@ -130,7 +149,22 @@ class UserGoogleLoginView(APIView):
             return Response({'errors': 'Invalid token type'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+class UpdateUserTypeView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    def put(self, request):
+        user = request.user
+        if user.is_authenticated:
+            user_type = request.data.get('user_type')
+            if user_type:
+                user.user_type = user_type
+                user.save()
+                return Response({"msg": "User type updated successfully"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "User type not provided"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"error": "User not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
 
 # API to View Profie of Currently LoggedIn User
 class UserProfileView(APIView):
