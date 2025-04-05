@@ -67,31 +67,23 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserGoogleLoginSerializer(serializers.Serializer):
     token = serializers.CharField(write_only=True)
-
     def validate_token(self, access_token):
         if not access_token:
             raise serializers.ValidationError("No token provided")
-
         try:
             headers = {"Authorization": f"Bearer {access_token}"}
             user_data = req.get("https://www.googleapis.com/oauth2/v3/userinfo", headers=headers).json()
-
             if 'error' in user_data or not user_data.get("email"):
                 raise serializers.ValidationError("Invalid or missing email in token")
-
             email = user_data.get("email")
             user = User.objects.filter(email=email).first()
-
             if not user:
                 raise serializers.ValidationError("User not registered. Please register first.")
-
             if not user.is_verified:
                 user.is_verified = True
                 user.save()
-
             self.context['user'] = user
             return access_token
-
         except req.exceptions.RequestException:
             raise serializers.ValidationError("Error verifying token")
         except Exception as e:
@@ -113,24 +105,19 @@ class UserGoogleLoginSerializer(serializers.Serializer):
 
 class UserGoogleRegisterSerializer(serializers.Serializer):
     token = serializers.CharField(write_only=True)
-
     def validate_token(self, access_token):
         if not access_token:
             raise serializers.ValidationError("No token provided")
-
         try:
             headers = {"Authorization": f"Bearer {access_token}"}
             user_data = req.get("https://www.googleapis.com/oauth2/v3/userinfo", headers=headers).json()
 
             if 'error' in user_data or not user_data.get("email"):
                 raise serializers.ValidationError("Invalid or missing email in token")
-
             email = user_data.get("email")
             user = User.objects.filter(email=email).first()
-
             if user:
                 raise serializers.ValidationError("User already exists. Please login instead.")
-            print("user information ",user_data)
             user = User.objects.create_user(
                 email=email,
                 firstname=user_data.get('name'),
@@ -140,7 +127,6 @@ class UserGoogleRegisterSerializer(serializers.Serializer):
             user.is_verified = True
             user.proflie_pic = user_data.get('picture')
             user.save()
-
             # Send welcome email
             subject = 'Welcome to GokapinnoTech!'
             body = f"""
@@ -156,10 +142,8 @@ class UserGoogleRegisterSerializer(serializers.Serializer):
             The GokapinnoTech Team
             """
             send_mail(subject, body, "gokap@gokapinnotech.com", [user.email])
-
             self.context['user'] = user
             return access_token
-
         except req.exceptions.RequestException:
             raise serializers.ValidationError("Error verifying token")
         except Exception as e:
@@ -182,11 +166,9 @@ class UserGoogleRegisterSerializer(serializers.Serializer):
 class ChangePasswordSerializer(serializers.ModelSerializer):
     # password = serializers.CharField(max_length=255, style={'input_type':'password'}, write_only=True)
     cnfpassword = serializers.CharField(max_length=255, style={'input_type': 'password'}, write_only=True)
-    
     class Meta:
         model = User
         fields = ['password', 'cnfpassword']
-        
     def validate(self, attrs):
         password = attrs.get('password')
         cnfpassword = attrs.get('cnfpassword')
