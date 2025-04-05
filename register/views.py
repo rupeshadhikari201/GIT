@@ -7,14 +7,12 @@ from project.models import ProjectStatus
 from client.models import Client
 from rest_framework import mixins
 from rest_framework import generics
-from register.serializer import AddressSerializer,ChangePasswordSerializer,  GetUserSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UpdateUserSerializer, UserPasswordUpdateSerializer, UserLoginSerializer, UserProfileSerializer,  VerifyUserEmailSerializer
+from register.serializer import AddressSerializer,ChangePasswordSerializer,  GetUserSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UserGoogleLoginSerializer, UserGoogleRegisterSerializer, UserPasswordUpdateSerializer, UserLoginSerializer, UserProfileSerializer,  VerifyUserEmailSerializer
 from common.serializer import UserRegistrationSerializer
 from django.contrib.auth import authenticate, login, logout
 from register.renderers import UserRenderer
 from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
-from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
-from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import  render
 from django.utils.encoding import smart_str
@@ -25,8 +23,7 @@ import logging
 import os
 from django.utils.functional import empty
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
-import requests as req
-from django.core.mail import send_mail
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,7 +39,6 @@ def get_tokens_for_user(user):
 # API to Register User
 class UserRegistrationView(APIView):
     renderer_classes = [UserRenderer]
-
     def post(self, request, format=None):
         #changing to lowercase
         request.data['email'] = request.data['email'].lower() if request.data and request.data['email'] else ""
@@ -51,9 +47,16 @@ class UserRegistrationView(APIView):
            user = serializer.save()
            token = get_tokens_for_user(user)
            user_id = user.id
-           if(user.user_type == "client"):
-                client_instance, created = Client.objects.get_or_create(user=user)
-           return Response({"token":token, 'msg': "User Registration Sucessfull", "user_id": user_id }, status=status.HTTP_201_CREATED)
+           user_type = user.user_type
+        #    if(user.user_type == "client"):
+        #         client_instance, created = Client.objects.get_or_create(user=user)
+           return Response({"token":token, 'msg': "User Registration Sucessfull", 
+                            "user_id": user_id,
+                            'role':user_type, 
+                             'email':user.email,
+                             'firstname':user.firstname,
+                             'lastname':user.lastname,
+                            }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # API to Login User
@@ -75,8 +78,8 @@ class UserLoginView(APIView):
                     # Fetch user_type ans user_id from user object
                     user_type = user.user_type  
                     user_id = user.id 
-                    # created_at = user.created_at  # Fetch created_at from user object
-                    return Response({'token': token, 'msg': "User Login Sucessfull", 'user_type': user_type,"user_id" : user_id}, status.HTTP_202_ACCEPTED)
+                    is_verified = user.is_verified  # Fetch created_at from user object
+                    return Response({'token': token, 'msg': "User Login Sucessfull", 'role': user_type,"user_id" : user_id,'is_verified':is_verified,"email":user.email}, status.HTTP_202_ACCEPTED)
                 else:
                     return Response({'errors' : "User not verified"}, status=status.HTTP_401_UNAUTHORIZED)
             else:
@@ -86,85 +89,45 @@ class UserLoginView(APIView):
         
 class UserGoogleLoginView(APIView):
     renderer_classes = [UserRenderer]
+
     def post(self, request):
-        #check user google id token
-        access_token = request.data.get('token')
-        if not access_token:
-            return Response({'error': 'No token provided'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            headers = {
-                    "Authorization": f"Bearer {access_token}"
-                }
-            user_data = req.get("https://www.googleapis.com/oauth2/v3/userinfo", headers=headers).json()
-            #user_data = {sub,name,given_name,family_name,picture,email,email_verified,picture}
-            if 'error' in user_data:
-                return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
-            email = user_data.get('email')
-            if not email:
-                return Response({'error': 'No email found in token'}, status=status.HTTP_400_BAD_REQUEST)       
-            
-            # Check if user exists in the database  
-            user = User.objects.filter(email=email).first()
-            if not user:
-                # If user does not exist, create a new user
-                user = User.objects.create_user(email=email, password=None, is_verified=True,auth_type='google',proflie_pic=user_data.get('picture'))
-                user.save()
-                subject = 'Welcome to GokapinnoTech!'
-                #send welcome email
-                body = f"""
-                Dear {user.firstname},  
+        serializer = UserGoogleLoginSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            data = serializer.save()
+            return Response(data, status=status.HTTP_200_OK)
+        return Response({"errors": "Please signup first"}, status=status.HTTP_400_BAD_REQUEST)
 
-                Welcome to GokapinnoTech! 🎉  
 
-                We’re excited to have you on board. Our platform connects clients and freelancers to work together.  
+class UserGoogleRegisterView(APIView):
+    renderer_classes = [UserRenderer]
 
-                Get started by exploring our features and setting up your profile. If you have any questions, feel free to reach out.  
+    def post(self, request):
+        serializer = UserGoogleRegisterSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            data = serializer.save()
+            return Response(data, status=status.HTTP_201_CREATED)
+        token_errors = serializer.errors.get('token', [])
+        print(token_errors)
+        return Response({"errors": "User already exist"}, status=status.HTTP_400_BAD_REQUEST)
 
-                Best regards,  
-                The GokapinnoTech Team  
-                """
-                send_from = "gokap@gokapinnotech.com"
-                send_to = [user.email]
-                send_mail(subject,body,send_from,send_to)
-            if user.is_verified == False:
-                user.is_verified = True
-                user.save()
-            # Generate JWT tokens for the user
-            token = get_tokens_for_user(user)   
-            # Log the user in
-            login(request, user)
-            # Return the token and user type in the response    
-            return Response({'token': token, 'msg': "User Login Sucessfull", 'user_type': user.user_type,"user_id" : user.pk}, status=status.HTTP_200_OK)
-        except req.exceptions.RequestException as e:
-            return Response({'errors': 'Error verifying token'}, status=status.HTTP_400_BAD_REQUEST)
-        except ValueError as e:
-            return Response({'errors': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
-        except TokenError as e:
-            return Response({'errors': 'Token error'}, status=status.HTTP_400_BAD_REQUEST)
-        except AttributeError as e:
-            return Response({'errors': 'Invalid token structure'}, status=status.HTTP_400_BAD_REQUEST)
-        except KeyError as e:
-            return Response({'errors': 'Missing key in token'}, status=status.HTTP_400_BAD_REQUEST)
-        except TypeError as e:
-            return Response({'errors': 'Invalid token type'}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-class UpdateUserTypeView(APIView):
+class UpdateUserRoleView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
     def put(self, request):
         user = request.user
         if user.is_authenticated:
-            user_type = request.data.get('user_type')
+            user_type = request.data.get('role')
             if user_type:
                 user.user_type = user_type
                 user.save()
-                return Response({"msg": "User type updated successfully"}, status=status.HTTP_200_OK)
+                if(user.user_type == "client"):
+                    client_instance, created = Client.objects.get_or_create(user=user)
+                    return Response({"msg": "User type updated successfully","user_id":client_instance.user.pk,"role":user.user_type,"client_id":client_instance.pk,"created":created}, status=status.HTTP_200_OK)
+                return Response({"msg": "User type updated successfully","user_id":user.pk,"role":user.user_type}, status=status.HTTP_200_OK)
             else:
-                return Response({"error": "User type not provided"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"errors": "User type not provided"}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({"error": "User not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"errors": "User not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
 
 # API to View Profie of Currently LoggedIn User
 class UserProfileView(APIView):

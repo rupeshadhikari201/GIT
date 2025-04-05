@@ -1,15 +1,22 @@
+from tokenize import TokenError
 from django.utils.encoding import smart_str, force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework import serializers
 from register.models import  User, Address
 from django.core.mail import send_mail
-from django.conf import settings
-from django.shortcuts import render, get_object_or_404
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from rest_framework_simplejwt.tokens import RefreshToken
+import requests as req
+from django.contrib.auth import authenticate, login
 import os
-
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
 # API Serializer to Register User  
 class UserRegistrationSerializer(serializers.ModelSerializer):
     # cnfpassword = serializers.CharField(style={'input_type' : 'password'},write_only=True)
@@ -57,7 +64,120 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         exclude = ['password']
-    
+
+class UserGoogleLoginSerializer(serializers.Serializer):
+    token = serializers.CharField(write_only=True)
+
+    def validate_token(self, access_token):
+        if not access_token:
+            raise serializers.ValidationError("No token provided")
+
+        try:
+            headers = {"Authorization": f"Bearer {access_token}"}
+            user_data = req.get("https://www.googleapis.com/oauth2/v3/userinfo", headers=headers).json()
+
+            if 'error' in user_data or not user_data.get("email"):
+                raise serializers.ValidationError("Invalid or missing email in token")
+
+            email = user_data.get("email")
+            user = User.objects.filter(email=email).first()
+
+            if not user:
+                raise serializers.ValidationError("User not registered. Please register first.")
+
+            if not user.is_verified:
+                user.is_verified = True
+                user.save()
+
+            self.context['user'] = user
+            return access_token
+
+        except req.exceptions.RequestException:
+            raise serializers.ValidationError("Error verifying token")
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+    def create(self, validated_data):
+        user = self.context['user']
+        request = self.context['request']
+        login(request, user)
+        token = get_tokens_for_user(user)
+        return {
+            'token': token,
+            'msg': "User Login Successful",
+            'role': user.user_type,
+            'user_id': user.pk,
+            'is_verified': user.is_verified,
+        }
+
+
+class UserGoogleRegisterSerializer(serializers.Serializer):
+    token = serializers.CharField(write_only=True)
+
+    def validate_token(self, access_token):
+        if not access_token:
+            raise serializers.ValidationError("No token provided")
+
+        try:
+            headers = {"Authorization": f"Bearer {access_token}"}
+            user_data = req.get("https://www.googleapis.com/oauth2/v3/userinfo", headers=headers).json()
+
+            if 'error' in user_data or not user_data.get("email"):
+                raise serializers.ValidationError("Invalid or missing email in token")
+
+            email = user_data.get("email")
+            user = User.objects.filter(email=email).first()
+
+            if user:
+                raise serializers.ValidationError("User already exists. Please login instead.")
+            print("user information ",user_data)
+            user = User.objects.create_user(
+                email=email,
+                firstname=user_data.get('name'),
+                lastname=user_data.get('family_name') if user_data.get('family_name') else user_data.get('given_name'),
+            )
+            user.auth_type = 'google'
+            user.is_verified = True
+            user.proflie_pic = user_data.get('picture')
+            user.save()
+
+            # Send welcome email
+            subject = 'Welcome to GokapinnoTech!'
+            body = f"""
+            Dear {user.firstname},
+
+            Welcome to GokapinnoTech! 🎉
+
+            We’re excited to have you on board. Our platform connects clients and freelancers to work together.
+
+            Get started by exploring our features and setting up your profile. If you have any questions, feel free to reach out.
+
+            Best regards,
+            The GokapinnoTech Team
+            """
+            send_mail(subject, body, "gokap@gokapinnotech.com", [user.email])
+
+            self.context['user'] = user
+            return access_token
+
+        except req.exceptions.RequestException:
+            raise serializers.ValidationError("Error verifying token")
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+
+    def create(self, validated_data):
+        user = self.context['user']
+        request = self.context['request']
+        login(request, user)
+        token = get_tokens_for_user(user)
+        return {
+            'token': token,
+            'msg': "User Registration Successful",
+            'role': user.user_type,
+            'user_id': user.pk,
+            'is_verified': user.is_verified,
+        }
+
 # API Serializer to Change Password
 class ChangePasswordSerializer(serializers.ModelSerializer):
     # password = serializers.CharField(max_length=255, style={'input_type':'password'}, write_only=True)
@@ -81,7 +201,6 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
 # API Serializer to Send Password Reset Email     
 class SendPasswordResetEmailSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=255)
-    
     class Meta:
         model = User
         fields = ['email']

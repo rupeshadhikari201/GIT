@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser ,BaseUserManager
 
 class UserManager(BaseUserManager):
     
@@ -39,7 +39,7 @@ class UserManager(BaseUserManager):
         return user
 
 # Custom Model
-class User(models.Model):
+class User(AbstractBaseUser):
     firstname = models.CharField(max_length=255)
     lastname = models.CharField(max_length=255)
     email = models.EmailField(
@@ -48,7 +48,7 @@ class User(models.Model):
         unique=True,
     )   
     password = models.CharField(max_length=255)
-    user_type = models.CharField(max_length=255)
+    user_type = models.CharField(max_length=255,blank=True,null=True)
     is_verified = models.BooleanField(default=False, verbose_name='email verified')
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
@@ -56,7 +56,7 @@ class User(models.Model):
     updated_at = models.DateTimeField(auto_now=True) 
     auth_type = models.CharField(max_length=255, default='email', blank=True, null=True) # for social auth type
     profile_pic = models.TextField(blank=True, null=True) # for social auth type
-    # objects = UserManager()
+    objects = UserManager()
     USERNAME_FIELD = "email"    #takes email to login user
     REQUIRED_FIELDS = ["firstname", "lastname", "password",]
 

@@ -1,10 +1,10 @@
 from django.urls import path, include
 from register.views import AddressDetailView, \
-            LogoutView, UserPasswordUpdateView, \
+            LogoutView, UserGoogleRegisterView, UserPasswordUpdateView, \
             UserProfileByIdView,UserRegistrationView,\
             UserLoginView, UserProfileView, ChangePasswordView,\
             SendUserVerificationLinkView, VerifyUserEmailView,\
-            SendPasswordResetEmailView,UserGoogleLoginView,UpdateUserTypeView
+            SendPasswordResetEmailView,UserGoogleLoginView,UpdateUserRoleView
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.urlpatterns import format_suffix_patterns
 from register import views
@@ -13,8 +13,8 @@ urlpatterns = [
      path("register/", UserRegistrationView.as_view(), name="user"),
      path('login/',UserLoginView.as_view(), name='login'),
      path('login/google/',UserGoogleLoginView.as_view(), name='google_login'),
-     path('register/google/',UserGoogleLoginView.as_view(), name='google_register'),
-     path('update_type/',UpdateUserTypeView.as_view(), name='update_type'),
+     path('register/google/',UserGoogleRegisterView.as_view(), name='google_register'),
+     path('role/',UpdateUserRoleView.as_view(), name='update_role'),
      path('profile/', UserProfileView.as_view(), name='profile'),
      path('profile/<int:user_id>/', UserProfileByIdView.as_view(), name='profile_by_id'),
      path("change_password/", ChangePasswordView.as_view(), name='change_password'),
@@ -28,7 +28,6 @@ urlpatterns = [
      path('<int:pk>/', views.GetUserView.as_view(), name='get_user_details'),
      path('update/', views.UpdateUserView.as_view(), name='update_user_details'),
      path('delete/<int:pk>/', views.GetUserView.as_view(), name='delete_user'),
-  
       path('address/', AddressDetailView.as_view(), name='address-detail'),
 ] 
 
