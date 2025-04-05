@@ -21,7 +21,7 @@ class ProjectCreationView(APIView):
         serialized = serializer.ProjectCreationSerializer(data=data)
         if serialized.is_valid():
             serialized.save()
-            return Response({"msg":"Project Created!", "details": serialized.data}, status=status.HTTP_201_CREATED)
+            return Response({"msg":"Project Created!", "serialized_data": serialized.data}, status=status.HTTP_201_CREATED)
         return Response({"errors": serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
    
 # API for ProjectUpdation Serializer 
@@ -29,40 +29,32 @@ class ProjectUpdateView(APIView):
     
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
-    
-    # get object
+# get object
     def get_object(self, project_id):
         try:    
             return Projects.objects.get(pk=project_id)
         except Projects.DoesNotExist:
             return None
         
-    
-    def put(self,request,project_id, *args, **kwargs):
-        
-        # get object
+    def put(self, request, project_id: int, *args, **kwargs):
         project = self.get_object(project_id)
         if project is None:
-            return Response({"errors": "Project is not found"}, status=status.HTTP_404_NOT_FOUND) 
-        
-        serialized = serializer.ProjectCreationSerializer(project, data=request.data)
+            return Response({"errors": "Project is not found"}, status=status.HTTP_404_NOT_FOUND)
+        serialized = serializer.ProjectUpdationSerializer(project, data=request.data,partial=True)
         if serialized.is_valid():
             serialized.save()
-            return Response({"msg":"Project Updated!", "serialized_data": serialized.data}, status=status.HTTP_201_CREATED)
+            return Response({"msg": "Project Updated!", "serialized_data": serialized.data}, status=status.HTTP_200_OK)
         return Response(serialized.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    
+
     def patch(self, request, project_id, *args, **kwargs):
         project = self.get_object(project_id)
         if project is None:
-            return Response({'errors': "Project not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        serializered = serializer.ProjectCreationSerializer(project, data=request.data, partial=True)
-        if serializered.is_valid():
-            serializered.save()
-            return Response({"msg": "Project Updated!", "details": serializered.data}, status=status.HTTP_200_OK)
-        return Response(serializered.errors, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({"errors": "Project not found"}, status=status.HTTP_404_NOT_FOUND)
+        serialized = serializer.ProjectUpdationSerializer(project, data=request.data, partial=True)
+        if serialized.is_valid():
+            serialized.save()
+            return Response({"msg": "Project Updated!", "serialized_data": serialized.data}, status=status.HTTP_200_OK)
+        return Response(serialized.errors, status=status.HTTP_400_BAD_REQUEST)
 # API to FilterProject Serializer
 class PriceFilterView(APIView): 
     renderer_classes = [UserRenderer]
@@ -96,9 +88,7 @@ class ProjectSearchView(APIView):
         min_price = request.query_params.get('min_price', None)
         max_price = request.query_params.get('max_price', None)
         min_applicants = request.query_params.get('min_applicants', None)
-        max_applicants = request.query_params.get('max_applicants', None)
-
-        
+        max_applicants = request.query_params.get('max_applicants', None)  
         
         if title:
             title_queryset = Projects.objects.filter(title__icontains=title)

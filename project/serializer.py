@@ -7,6 +7,15 @@ class ProjectCreationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Projects
         fields = '__all__'
+    
+class ProjectUpdationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Projects
+        fields = '__all__'
+        extra_kwargs = {
+            field: {'required': False} for field in Projects._meta.get_fields()
+            if hasattr(field, 'name') and field.name != 'id'
+        }
 
 # API serializer for GetUnassignedProject
 class GetUnassingedProjectSerializer(serializers.ModelSerializer):
@@ -17,7 +26,6 @@ class GetUnassingedProjectSerializer(serializers.ModelSerializer):
         
 # Project Status Serializer
 class ProjectStatusSerializer(serializers.ModelSerializer):
-    
     class Meta:
         model = ProjectStatus
         fields= '__all__'

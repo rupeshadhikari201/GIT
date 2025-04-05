@@ -24,7 +24,6 @@ class Projects(models.Model):
     
     # get the defualt payment status
     def get_default_payment_status():
-        print("The default Payment Status id : ",PaymentStatus.objects.get(payment_status='UN').pk)
         return PaymentStatus.objects.get(payment_status='UN').pk
     
     # get the defualt project status
