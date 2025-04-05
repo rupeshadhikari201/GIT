@@ -108,7 +108,7 @@ class UserGoogleRegisterView(APIView):
             return Response(data, status=status.HTTP_201_CREATED)
         token_errors = serializer.errors.get('token', [])
         print(token_errors)
-        return Response({"errors": "User already exist"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"errors": "User already exists. Please login instead."}, status=status.HTTP_400_BAD_REQUEST)
 
 class UpdateUserRoleView(APIView):
     renderer_classes = [UserRenderer]
