@@ -116,14 +116,14 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 database_url = os.getenv('DATABASE_URL')
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "gokapdb",
-        "USER": "gokap",
-        "HOST": "localhost",
-        "PORT": '5432',
-        "PASSWORD": 'gokap123'
-    },
+    # "default": {
+    #     "ENGINE": "django.db.backends.postgresql",
+    #     "NAME": "gokapdb",
+    #     "USER": "gokap",
+    #     "HOST": "localhost",
+    #     "PORT": '5432',
+    #     "PASSWORD": 'gokap123'
+    # },
   
     # 'default': {
     # 'ENGINE': 'django.db.backends.postgresql',
@@ -136,12 +136,12 @@ DATABASES = {
     #   'sslmode': 'require',
     # },
     # },
-    # 'default': dj_database_url.config(
-    #     default=os.environ.get('DATABASE_URL'),
-    #     conn_max_age=600,
-    #     conn_health_checks=True,
-    #     # ssl_require=True,
-    # )
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+        # ssl_require=True,
+    )
 }
 
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")
