@@ -49,7 +49,6 @@ requests==2.31.0
 requests-oauthlib==2.0.0
 requests-toolbelt==1.0.0
 rich==13.7.1
-rpds-py==0.18.1
 simplejson==3.19.2
 stripe==10.11.0
 sqlparse==0.4.4

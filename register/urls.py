@@ -28,7 +28,7 @@ urlpatterns = [
      path('<int:pk>/', views.GetUserView.as_view(), name='get_user_details'),
      path('update/', views.UpdateUserView.as_view(), name='update_user_details'),
      path('delete/<int:pk>/', views.GetUserView.as_view(), name='delete_user'),
-      path('address/', AddressDetailView.as_view(), name='address-detail'),
+     path('address/', AddressDetailView.as_view(), name='address-detail'),
 ] 
 
 urlpatterns = format_suffix_patterns(urlpatterns)
