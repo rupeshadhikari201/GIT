@@ -7,7 +7,7 @@ from project import serializer
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
-
+from rest_framework.pagination import PageNumberPagination
 
 # API for ProjectCreation Serializer
 class ProjectCreationView(APIView):
@@ -76,7 +76,10 @@ class PriceFilterView(APIView):
              return Response({'serialized_data': serialized.data}, status=status.HTTP_201_CREATED)
         if(price_end == 0 and n_applicant < 0):
             return Response({"error":"Invalid filter"},status=status.HTTP_400_BAD_REQUEST)  
-
+class ProjectsSearchPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 # API to SearchProject Serializer           
 class ProjectSearchView(APIView):
     renderer_classes = [UserRenderer]
@@ -111,20 +114,30 @@ class ProjectSearchView(APIView):
 
         if not (title or description or min_price or max_price or min_applicants or max_applicants):
             return Response({"errors": "No search criteria provided"}, status=400)
+        paginator = ProjectsSearchPagination()
+        paginated_queryset = paginator.paginate_queryset(queryset, request, view=self)
+        serializer_instance = serializer.ProjectCreationSerializer(paginated_queryset, many=True)
+        result = paginator.get_paginated_response(serializer_instance.data)
+        return Response({'serialized_data': result.data}, status=status.HTTP_200_OK)
+    
 
-        serialized = serializer.ProjectCreationSerializer(queryset, many=True)
-        return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
     
-# API to GetUnassignedProject 
+class UnassignedProjectsPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
 class GetUnassingedProjects(APIView):
-    
-    renderer_classes = [UserRenderer]
-    
+    # renderer_classes = [UserRenderer] # This line remains commented as it was commented in original code
+
     def get(self, request):
-        # Fetch all projects that are not assigned
-        unassigned_projects = Projects.objects.filter(project_assigned_status=False).order_by('-created_at')
-        serializered = serializer.GetUnassingedProjectSerializer(unassigned_projects, many=True)
-        return Response({'serialized_data': serializered.data}, status=status.HTTP_200_OK)
+        queryset = Projects.objects.filter(project_assigned_status=False).order_by('-created_at')
+        paginator = UnassignedProjectsPagination()
+        paginated_queryset = paginator.paginate_queryset(queryset, request, view=self)
+        serializer_instance = serializer.GetUnassingedProjectSerializer(paginated_queryset, many=True)
+        result = paginator.get_paginated_response(serializer_instance.data)
+        return Response({"serialized_data":result.data})
 
 # Delete Unassigned Project Project
 class DeleteUnassignedProject(APIView):
