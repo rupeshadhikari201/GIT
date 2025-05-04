@@ -74,6 +74,7 @@ MIDDLEWARE = [
 # "*"  # Allow all origins (not recommended for production)
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "https://freelance.gokapinnotech.com"
  ]
 CORS_ALLOW_ALL_ORIGINS = True
 
@@ -123,26 +124,26 @@ DATABASES = {
     #     "PORT": '5432',
     #     "PASSWORD": 'gokap123'
     # },
-    # "default": {
-    #     "ENGINE": "django.db.backends.postgresql",
-    #     "NAME": "gokapdb",
-    #     "USER": "postgres",
-    #     "HOST": "localhost",
-    #     "PORT": '5432',
-    #     "PASSWORD": 'root'
-    # },
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "gokapdb",
+        "USER": "postgres",
+        "HOST": "localhost",
+        "PORT": '5432',
+        "PASSWORD": 'root'
+    },
   
-    'default': {
-    'ENGINE': 'django.db.backends.postgresql',
-    'NAME': os.getenv('PGDATABASE'),
-    'USER': os.getenv('PGUSER'),
-    'PASSWORD': os.getenv('PGPASSWORD'),
-    'HOST': os.getenv('PGHOST'),
-    'PORT': os.getenv('PGPORT', 5432),
-    'OPTIONS': {
-      'sslmode': 'require',
-    },
-    },
+    # 'default': {
+    # 'ENGINE': 'django.db.backends.postgresql',
+    # 'NAME': os.getenv('PGDATABASE'),
+    # 'USER': os.getenv('PGUSER'),
+    # 'PASSWORD': os.getenv('PGPASSWORD'),
+    # 'HOST': os.getenv('PGHOST'),
+    # 'PORT': os.getenv('PGPORT', 5432),
+    # 'OPTIONS': {
+    #   'sslmode': 'require',
+    # },
+    # },
     # 'default': dj_database_url.config(
     #     default=os.environ.get('DATABASE_URL'),
     #     conn_max_age=600,
