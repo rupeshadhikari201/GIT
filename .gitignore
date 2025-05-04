@@ -20,3 +20,4 @@ freelancer/__pycache__
 db.sqlite3
 media
 backup.sql
+copydb.sql
