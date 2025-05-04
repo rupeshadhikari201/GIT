@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
     
     # my apps
@@ -40,6 +41,8 @@ INSTALLED_APPS = [
     "payment",
     "manager",
     "common",
+    "newsletters",
+    "feedback",
     
     "rest_framework",
     'rest_framework_simplejwt',
@@ -49,20 +52,13 @@ INSTALLED_APPS = [
     # dbbackup
     'dbbackup',
     
-    # swagger
-    'drf_yasg',
-    'rest_framework_swagger',
-    
-    # stipe
-    'stripe',
-    
-    
 ]
 # say django to use account.user as the default user
 AUTH_USER_MODEL = "register.User"
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -76,12 +72,9 @@ MIDDLEWARE = [
 ]
 
 # "*"  # Allow all origins (not recommended for production)
-# CORS_ALLOWED_ORIGINS = [
-#     "https://rupeshadhikari201.github.io",  
-#     "http://localhost:5173",
-#     "http://localhost:8000",
-#     "http://127.0.0.1:8000",
-# ]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+ ]
 CORS_ALLOW_ALL_ORIGINS = True
 
 # Rest Framework
@@ -124,11 +117,11 @@ WSGI_APPLICATION = "backend.wsgi.application"
 DATABASES = {
     # "default": {
     #     "ENGINE": "django.db.backends.postgresql",
-    #     "NAME": "postgres1",
-    #     "USER": "postgres",
+    #     "NAME": "gokapdb",
+    #     "USER": "gokap",
     #     "HOST": "localhost",
     #     "PORT": '5432',
-    #     "PASSWORD": 12345
+    #     "PASSWORD": 'gokap123'
     # },
     # "default": {
     #     "ENGINE": "django.db.backends.postgresql",
@@ -164,11 +157,6 @@ EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_HOST_USER = '21bcs11201@gmail.com'
-# EMAIL_HOST_PASSWORD = 'uoba zdxf aucb uxih'
 
 
 # Password validation
