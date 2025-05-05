@@ -13,6 +13,7 @@ from rest_framework import status
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from rest_framework.pagination import PageNumberPagination
 # Create your views here.
 class ProjectAssignView(APIView):
     
@@ -97,24 +98,36 @@ class GetAssignedFreelancerUsingProjectId(APIView):
             return Response({"serialized_data":result}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"errors":str(e)},status=status.HTTP_400_BAD_REQUEST)
-        
+class ProjectsPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 #Get all projects
 class GetAllProject(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
 
     def get(self,request):
-        project_queryset = Projects.objects.all()
-        serialized = ProjectCreationSerializer(project_queryset,many=True)
-        return Response({'serialized_data':serialized.data},status=status.HTTP_200_OK)
+        project_queryset = Projects.objects.all().order_by('-created_at')
+        paginator = ProjectsPagination()
+        paginated_queryset = paginator.paginate_queryset(project_queryset, request, view=self)
+        serializer_instance = ProjectCreationSerializer(paginated_queryset, many=True)
+        result = paginator.get_paginated_response(serializer_instance.data)
+        return Response({"serialized_data":result.data},status=status.HTTP_200_OK)
     
 #Get assinged Projects 
 class GetAssingedProject(APIView):
 
     def get(self,request):
-        assinged_project = Projects.objects.filter(project_assigned_status=True).all()
-        serialized = ProjectCreationSerializer(assinged_project,many=True)
-        return Response({'serialized_data':serialized.data},status=status.HTTP_200_OK)
+        assinged_project = Projects.objects.filter(project_assigned_status=True).all().order_by('-created_at')
+        paginator = ProjectsPagination()
+        paginated_queryset = paginator.paginate_queryset(assinged_project, request, view=self)
+        serializer_instance = ProjectCreationSerializer(paginated_queryset, many=True)
+        result = paginator.get_paginated_response(serializer_instance.data)
+        return Response({"serialized_data":result.data},status=status.HTTP_200_OK)
+   
+
 # GET applied  Freelancers details for any project_id
 class AppliedFreelancersVeiw(APIView):
     renderer_classes = [UserRenderer]
