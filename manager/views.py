@@ -1,7 +1,7 @@
 import os
 from django.http import JsonResponse
 from rest_framework.response import Response
-from freelancer.serializer import  ApplyedProjectAndFreelancerSerializer
+from freelancer.serializer import  ApplyedProjectAndFreelancerSerializer, GetDetailsOfFrelancersSerializer
 from project.models import ApplyProject, Projects, ProjectsAssigned
 from project.serializer import ProjectCreationSerializer
 from register.models import User
@@ -152,7 +152,6 @@ class AppliedFreelancersVeiw(APIView):
         
 
 class SendInvitaionToFreelancerView(APIView):
-
     def post(self,request):
         email = request.data['email']
         project_id = request.data['project_id']
@@ -170,8 +169,7 @@ class SendInvitaionToFreelancerView(APIView):
             })
             # Create plain text version of the email
             body  = f"""
-          Dear { user.firstname },
-
+                Dear { user.firstname },
                 You have been invited to join a new project on our platform. Here are the details:
                 { project.title }
                 Description: {project.description }
@@ -189,3 +187,43 @@ class SendInvitaionToFreelancerView(APIView):
             return Response({"msg":"success"},status=status.HTTP_200_OK)
         except Exception as e: 
             return Response({"errors":str(e)},status=status.HTTP_400_BAD_REQUEST)
+        
+
+class UserPagination(PageNumberPagination):
+    page_size = 15
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+class UserSearchView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        name = request.query_params.get('name')
+        email = request.query_params.get('email')
+        role = request.query_params.get('role')
+        print(role)
+        queryset = User.objects.filter(user_type=role)
+        if name:
+            queryset = queryset.filter(firstname__icontains=name) | queryset.filter(lastname__icontains=name)
+        if email:
+            queryset = queryset.filter(email__icontains=email)
+        if not queryset.exists():
+            return Response({"message": "No matching client found"}, status=404)
+        paginator = UserPagination()
+        paginated_queryset = paginator.paginate_queryset(queryset, request, view=self)
+        serializer_instance = GetDetailsOfFrelancersSerializer(paginated_queryset, many=True)
+        result = paginator.get_paginated_response(serializer_instance.data)
+        return Response({'serialized_data': result.data}, status=status.HTTP_200_OK)
+
+class UserDeleteView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    def delete(self, request, id):
+        try:
+            user = User.objects.get(pk=id)
+            if Projects.objects.filter(client_id=user.id).exists():
+                return Response({'errors': 'Cannot delete user with active projects.'}, status=status.HTTP_400_BAD_REQUEST)
+            user.delete()
+            return Response({'message': 'User deleted successfully.'}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({'errors': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)

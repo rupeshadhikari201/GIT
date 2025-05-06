@@ -104,19 +104,15 @@ class DeleteClient(APIView):
             user = User.objects.get(pk=id)
             if Projects.objects.filter(client_id=user.id).exists():
                 return Response({'errors': 'Cannot delete user with active projects.'}, status=status.HTTP_400_BAD_REQUEST)
-
             user.delete()
             return Response({'message': 'User deleted successfully.'}, status=status.HTTP_200_OK)
-
         except User.DoesNotExist:
             return Response({'errors': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
         
 # Get Client's Project details by Client Id
 class GetClientProjectsDetailByCliendId(APIView):
-    
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
-    
     def get(self,request,client_id):
         queryset = Projects.objects.filter(client=client_id)
         serialized = ProjectCreationSerializer(queryset, many=True)

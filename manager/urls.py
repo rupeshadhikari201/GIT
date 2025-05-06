@@ -9,6 +9,9 @@ urlpatterns = [
     path('project/all/',views.GetAllProject.as_view(),name='get_all_project'),
     path('project/assigned/',views.GetAssingedProject.as_view(),name="get_assinged_project"),
     path('applied/freelancers/<int:project_id>/', views.AppliedFreelancersVeiw.as_view(), name='applied_freelancer'),
-    #search user
     path('invite/freelancer/',views.SendInvitaionToFreelancerView.as_view()),
+    #search user
+    path('user/search/',views.UserSearchView.as_view()),
+    path('user/delete/<int:id>/',views.UserDeleteView.as_view())
+
 ]

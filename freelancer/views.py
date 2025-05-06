@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from project.models import Projects, ApplyProject
 from freelancer import serializer
-
+from rest_framework.pagination import PageNumberPagination
 # API to Create Freelancer
 class FreelancerCreationView(APIView):
     renderer_classes = [UserRenderer]
@@ -163,10 +163,8 @@ class FreelancerSearchView(APIView):
         skills = request.query_params.get('skills', '').lower().split(',')
         languages = request.query_params.get('languages', '').lower().split(',')
         profession = request.query_params.get('profession', '').lower()
-
         # Start with a base queryset
         queryset = Freelancer.objects.all()
-        
         # This checks if the skills list is not empty and not just a list with an empty string. It ensures we only apply the filter if actual skills were provided in the query.
         if skills and skills != ['']:
             # This initializes an empty Q object. Q objects in Django are used to build complex database queries.
@@ -174,7 +172,6 @@ class FreelancerSearchView(APIView):
             for skill in skills:
                 skill_query |= Q(skills__icontains=skill.strip())
             queryset = queryset.filter(skill_query)
-            
         if languages and  languages != ['']:
             language_query = Q()
             for language in languages:
@@ -182,15 +179,17 @@ class FreelancerSearchView(APIView):
             queryset = queryset.filter(language_query)
             
         if profession : 
-            queryset =  queryset.filter(profession__icontains=profession)
-            
+            queryset =  queryset.filter(profession__icontains=profession)  
         # If no filters applied, return an error
         if not (skills or languages or profession):
             return Response({"error": "No search criteria provided"}, status=400)
         
         serializer = FreelancerCreationSerializer(queryset, many=True)
         return Response({"serialized_data":serializer.data})
-
+class UserPagination(PageNumberPagination):
+    page_size = 15
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 # get all the details of all the frelancers
 class GetDetailsOfFrelancers(APIView):
     
@@ -198,6 +197,9 @@ class GetDetailsOfFrelancers(APIView):
     permission_classes = [IsAuthenticated] 
     
     def get(self,request):
-        frelancers_queryset = User.objects.filter(user_type="freelancer")
-        serialized = serializer.GetDetailsOfFrelancersSerializer(frelancers_queryset, many=True)
-        return Response({"serialized_data": serialized.data}, status=status.HTTP_200_OK)
+        freelancers_queryset = User.objects.filter(user_type="freelancer")
+        paginator = UserPagination()
+        paginated_queryset = paginator.paginate_queryset(freelancers_queryset, request, view=self)
+        serializer_instance = serializer.GetDetailsOfFrelancersSerializer(paginated_queryset, many=True)
+        result = paginator.get_paginated_response(serializer_instance.data)
+        return Response({"serialized_data":result.data},status=status.HTTP_200_OK)
