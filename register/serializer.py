@@ -11,6 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import requests as req
 from django.contrib.auth import authenticate, login
 import os
+import datetime
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
     return {
@@ -243,20 +244,16 @@ class UserPasswordUpdateSerializer(serializers.ModelSerializer):
     
 # API Serializer to Send User Verification Link       
 class SendUserVerificationSerializer(serializers.ModelSerializer):
-    
     # serialize the email Field
     email = serializers.EmailField(max_length=255)
-
     class Meta:
         model = User
         fields = ['email']
-    
     def validate(self, attrs):
         # Check if the user with the provided email exists in our database or 
         email = attrs.get('email')
         if email:
             email = email.lower()
-        print(email)
         if User.objects.filter(email=email).exists():
             user = User.objects.get(email=email)
             uid = urlsafe_base64_encode(force_bytes(user.id)) 
@@ -269,7 +266,6 @@ class SendUserVerificationSerializer(serializers.ModelSerializer):
                 'user': user,
                 'verification_link': link
             })
-
             # Create plain text version of the email
             plain_message = strip_tags(html_message)
             subject = 'Verify Your Email'
@@ -287,6 +283,31 @@ class SendUserVerificationSerializer(serializers.ModelSerializer):
             return attrs
         else: 
             raise serializers.ValidationError("The email is not Registered. Please register Yourself.")
+        
+
+class UserSendEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=255)
+    subject = serializers.CharField(max_length=255)
+    body = serializers.CharField()
+    def validate(self, attrs):
+        email = attrs.get('email').lower()
+        subject = attrs.get('subject')
+        body = attrs.get('body')
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User with this email does not exist.")
+        # Render HTML email
+        html_message = render_to_string('send_email.html', {
+            'user': user,
+            'subject': subject,
+            'body': body,
+            'current_year': datetime.datetime.now().year
+        })
+        send_from = "gokap@gokapinnotech.com"
+        send_to = [user.email]
+        send_mail(subject, body, send_from, send_to, html_message=html_message)
+        return attrs
 
 # API Serializer to VerifyUser    
 class VerifyUserEmailSerializer(serializers.ModelSerializer):

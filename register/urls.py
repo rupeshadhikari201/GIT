@@ -3,7 +3,7 @@ from register.views import AddressDetailView, \
             LogoutView, UserGoogleRegisterView, UserPasswordUpdateView, \
             UserProfileByIdView,UserRegistrationView,\
             UserLoginView, UserProfileView, ChangePasswordView,\
-            SendUserVerificationLinkView, VerifyUserEmailView,\
+            SendUserVerificationLinkView, UserSendEmail, VerifyUserEmailView,\
             SendPasswordResetEmailView,UserGoogleLoginView,UpdateUserRoleView
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.urlpatterns import format_suffix_patterns
@@ -29,6 +29,7 @@ urlpatterns = [
      path('update/', views.UpdateUserView.as_view(), name='update_user_details'),
      path('delete/<int:pk>/', views.GetUserView.as_view(), name='delete_user'),
      path('address/', AddressDetailView.as_view(), name='address-detail'),
+     path('send_email/', UserSendEmail.as_view(), name='send-email'),
 ] 
 
 urlpatterns = format_suffix_patterns(urlpatterns)

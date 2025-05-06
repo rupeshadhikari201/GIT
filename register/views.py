@@ -7,7 +7,7 @@ from project.models import ProjectStatus
 from client.models import Client
 from rest_framework import mixins
 from rest_framework import generics
-from register.serializer import AddressSerializer,ChangePasswordSerializer,  GetUserSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UserGoogleLoginSerializer, UserGoogleRegisterSerializer, UserPasswordUpdateSerializer, UserLoginSerializer, UserProfileSerializer,  VerifyUserEmailSerializer
+from register.serializer import AddressSerializer,ChangePasswordSerializer,  GetUserSerializer, SendPasswordResetEmailSerializer, SendUserVerificationSerializer, UserGoogleLoginSerializer, UserGoogleRegisterSerializer, UserPasswordUpdateSerializer, UserLoginSerializer, UserProfileSerializer, UserSendEmailSerializer,  VerifyUserEmailSerializer
 from common.serializer import UserRegistrationSerializer
 from django.contrib.auth import authenticate, login, logout
 from register.renderers import UserRenderer
@@ -89,7 +89,6 @@ class UserLoginView(APIView):
         
 class UserGoogleLoginView(APIView):
     renderer_classes = [UserRenderer]
-
     def post(self, request):
         serializer = UserGoogleLoginSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -100,7 +99,6 @@ class UserGoogleLoginView(APIView):
 
 class UserGoogleRegisterView(APIView):
     renderer_classes = [UserRenderer]
-
     def post(self, request):
         serializer = UserGoogleRegisterSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -165,7 +163,6 @@ class SendPasswordResetEmailView(APIView):
 # API to Update Password         
 class UserPasswordUpdateView(APIView):
     renderer_classes = [UserRenderer]
-
     def get(self,request, uid, token):
         context = {
             'id' : uid,
@@ -183,15 +180,22 @@ class UserPasswordUpdateView(APIView):
     
 # API to Send User Verification Link
 class SendUserVerificationLinkView(APIView): 
-    
     renderer_classes = [UserRenderer] 
-    
     def post(self, request):
         serialized = SendUserVerificationSerializer(data=request.data)
         if serialized.is_valid():
             return Response({"msg" : "Email Verification Link have been sent"}, status=status.HTTP_200_OK)
         return Response( serialized.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+class UserSendEmail(APIView):
+    renderer_classes = [UserRenderer] 
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        serialized = UserSendEmailSerializer(data=request.data)
+        if serialized.is_valid():
+            return Response({"msg" : "Email sent"}, status=status.HTTP_200_OK)
+        return Response( serialized.errors, status=status.HTTP_400_BAD_REQUEST)
+
 # API to Verify User Email
 class VerifyUserEmailView(APIView):
 
