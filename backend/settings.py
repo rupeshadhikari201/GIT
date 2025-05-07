@@ -8,7 +8,7 @@ import dj_database_url
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv()
+load_dotenv(override=True)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -114,7 +114,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "backend.wsgi.application"
-
+print("database url is ",os.environ.get('DATABASE_URL'))
 DATABASES = {
     # "default": {
     #     "ENGINE": "django.db.backends.postgresql",
