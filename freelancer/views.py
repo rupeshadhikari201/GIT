@@ -47,12 +47,10 @@ class FreelancerDetails(APIView):
     
     def get(self, request):   
       user  = request.user
-      
       try:
           freelancer_details= Freelancer.objects.get(user=user.id)
       except Freelancer.DoesNotExist:
           return Response({'errors': 'Freelancer not found'}, status=status.HTTP_404_NOT_FOUND)
-
       serialized= FreelancerDetailsSerializer(freelancer_details)
       return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
 
@@ -81,10 +79,9 @@ class ApplyProjectView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
-        print("id", request.user.id)
         data = request.data
-        data['frelancer_id'] = request.user.id
-        serialized = serializer.ApplyProjectSerializer(data= data)
+        data['freelancer_id'] = request.user.id
+        serialized = serializer.ApplyProjectSerializer(data=data)
         print("data is",data)
         project = Projects.objects.get(pk=data['project_id'])
         if serialized.is_valid():
@@ -100,11 +97,10 @@ class AppliedFreelancersView(APIView):
     def get(self,request,project_id):
         # get freelancers detail for specific project
         try:
-           
             freelancer_data = []
-            applied_project_freelancer  = ApplyProject.objects.filter(project_id=project_id).select_related('frelancer_id')
+            applied_project_freelancer  = ApplyProject.objects.filter(project_id=project_id).select_related('freelancer_id')
             for application in applied_project_freelancer:
-                freelancer = application.frelancer_id
+                freelancer = application.freelancer_id
                 freelancer_data.append({
                     'freelancer_id': freelancer.pk,
                     'details': serializer.ApplyProjectSerializer(application).data
@@ -126,7 +122,7 @@ class GetAppliedProject(APIView):
         
         try:
             freelancer = Freelancer.objects.get(user=user)
-            applied_projects = ApplyProject.objects.filter(frelancer_id=freelancer).select_related('project').all()
+            applied_projects = ApplyProject.objects.filter(freelancer_id=freelancer).select_related('project').all()
             try:
                 serialized = serializer.ApplyProjectAndProjectSerializer(applied_projects, many=True)
                 return Response({'serialized_data': serialized.data}, status=status.HTTP_200_OK)
@@ -136,7 +132,6 @@ class GetAppliedProject(APIView):
             return Response({'errors': str(e),}, status=status.HTTP_404_NOT_FOUND)
 #Get appliedProjectById
 class GetAppliedProjectById(APIView):
-    
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
     
@@ -146,7 +141,7 @@ class GetAppliedProjectById(APIView):
         
         try:
             freelancer = Freelancer.objects.get(user=user)
-            applied_projects = ApplyProject.objects.filter(pk=applied_id,frelancer_id=freelancer).select_related('project').all()
+            applied_projects = ApplyProject.objects.filter(pk=applied_id,freelancer_id=freelancer).select_related('project').all()
             print(applied_projects.values_list(),"applied projects")
             try:
                 serialized = serializer.ApplyProjectAndProjectSerializer(applied_projects,many=True)

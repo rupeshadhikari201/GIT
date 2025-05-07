@@ -131,7 +131,7 @@ class AppliedFreelancersVeiw(APIView):
             applied_project_freelancers  = ApplyProject.objects.filter(project=project_id).select_related('freelancer')
             print(applied_project_freelancers,"applied project")
             for application in applied_project_freelancers:
-                freelancer = application.frelancer
+                freelancer = application.freelancer
                 freelancer_data.append({
                     'freelancer_id': freelancer.pk,
                     'details': ApplyedProjectAndFreelancerSerializer(application).data
