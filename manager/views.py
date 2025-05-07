@@ -16,28 +16,20 @@ from django.utils.html import strip_tags
 from rest_framework.pagination import PageNumberPagination
 # Create your views here.
 class ProjectAssignView(APIView):
-    
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
-    
     # To Assign a Project
     def post(self, request):
         serialized = serializer.ProjectAssignSerializer(data=request.data)
         if serialized.is_valid():
-            
-            assigned = serialized.validated_data['assigned']
-            
-            if assigned:
-                # raise ValueError("Project is Already Assigned.")
-                return Response({"errors": "The Project is already assigned"},status=status.HTTP_400_BAD_REQUEST)
-            frelancer_id = serialized.validated_data['frelancer_id']         
-            project_id = serialized.validated_data['project_id']   
-            obj = ProjectsAssigned.objects.create(frelancer_id=frelancer_id, project_id=project_id)
+            freelancer = serialized.validated_data['freelancer']         
+            project = serialized.validated_data['project']   
+            obj = ProjectsAssigned.objects.create(freelancer=freelancer, project=project)
             project_data = serializer.ProjectAssignSerializer(obj)
             if obj is None:
                 raise ValueError("Error Assigning Project")
             else:
-                project = Projects.objects.get(id=project_id.id)
+                project = Projects.objects.get(id=project.id)
                 project.project_assigned_status = True
                 project.save()
                 return Response({'msg': "Project Assigned", 'serialized_data':project_data.data},status=status.HTTP_200_OK)
@@ -64,14 +56,13 @@ class GetAssignedProjectUsingFrelancerID(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = [IsAuthenticated]
     
-    def get(self,request, frelancer_id):
+    def get(self,request, freelancer_id):
         try:
-            project_ids_queryset = ProjectsAssigned.objects.filter(frelancer=frelancer_id)
+            project_ids_queryset = ProjectsAssigned.objects.filter(freelancer=freelancer_id)
             print(project_ids_queryset) 
             project_id_list = []
             for i in project_ids_queryset:
                 project_id_list.append(i.project_id)
-           
             project_queryset = Projects.objects.filter(id__in=project_id_list)
             serialized = ProjectCreationSerializer(project_queryset, many=True)
             return Response({"serialized_data":serialized.data}, status=status.HTTP_201_CREATED)
@@ -87,8 +78,8 @@ class GetAssignedFreelancerUsingProjectId(APIView):
             project_ids_queryset = ProjectsAssigned.objects.filter(project=project_id)
             freelancer_id_list = []
             for i in project_ids_queryset:
-                freelancer_id_list.append(i.frelancer)
-            applied_queryset = ApplyProject.objects.filter(project=project_id,frelancer__in=freelancer_id_list).select_related('frelancer')
+                freelancer_id_list.append(i.freelancer)
+            applied_queryset = ApplyProject.objects.filter(project=project_id,freelancer__in=freelancer_id_list).select_related('freelancer')
             result = []
             for applied in applied_queryset:
                 result.append({
@@ -97,6 +88,7 @@ class GetAssignedFreelancerUsingProjectId(APIView):
 
             return Response({"serialized_data":result}, status=status.HTTP_200_OK)
         except Exception as e:
+            print(e)
             return Response({"errors":str(e)},status=status.HTTP_400_BAD_REQUEST)
 class ProjectsPagination(PageNumberPagination):
     page_size = 10
@@ -136,7 +128,7 @@ class AppliedFreelancersVeiw(APIView):
         # get freelancers detail for specific project
         try:
             freelancer_data = []
-            applied_project_freelancers  = ApplyProject.objects.filter(project=project_id).select_related('frelancer')
+            applied_project_freelancers  = ApplyProject.objects.filter(project=project_id).select_related('freelancer')
             print(applied_project_freelancers,"applied project")
             for application in applied_project_freelancers:
                 freelancer = application.frelancer

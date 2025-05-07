@@ -69,7 +69,7 @@ class ApplyProjectSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ApplyedProjectAndFreelancerSerializer(serializers.ModelSerializer):
-    frelancer = FreelancerDetailsSerializer(read_only=True)
+    freelancer = FreelancerDetailsSerializer(read_only=True)
     class Meta:
         model = ApplyProject
         fields = '__all__'

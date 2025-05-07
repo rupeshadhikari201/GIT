@@ -163,11 +163,9 @@ class DeleteUnassignedProject(APIView):
 class GetProjectDetailsByIdView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes =  [ IsAuthenticated]
-    
     def get(self, request,project_id):
         projects = get_object_or_404(Projects,pk=project_id)
         serializered = serializer.ProjectCreationSerializer(projects)
-        
         return Response({"serialized_data":serializered.data})
     
 # API Database for holding project screenshots, doc and pdf files
