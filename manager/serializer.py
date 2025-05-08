@@ -15,9 +15,18 @@ class ProjectAssignSerializer(serializers.ModelSerializer):
         if exits:
             raise serializers.ValidationError("Project is already assigned ")
         return attrs
+    
+class ProjectUnAssignSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectsAssigned
+        fields = ['freelancer','project']
 
-        
-
+    def validate(self,attrs):
+        freelancer = attrs.get('freelancer')
+        project = attrs.get('project')
+        if not ProjectsAssigned.objects.filter(freelancer=freelancer,project=project).exists():
+            raise serializers.ValidationError("Project is not assigned to freelancer")
+        return attrs
 
 class SendInvitationToFreelancerSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=255)

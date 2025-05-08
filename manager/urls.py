@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 urlpatterns = [
     path('assign_project/', views.ProjectAssignView.as_view(), name='assign_project'),
+    path('unassign_project/', views.ProjectUnAssignView.as_view(), name='unassign_project'),
     #to get multiple project based on freelancer id
     path('assigned/projects/<int:freelancer_id>/', views.GetAssignedProjectUsingFrelancerID.as_view()),
     path('assigned/freelancer/<int:project_id>/',views.GetAssignedFreelancerUsingProjectId.as_view()),

@@ -34,7 +34,7 @@ class ProjectAssignView(APIView):
                 project.save()
                 return Response({'msg': "Project Assigned", 'serialized_data':project_data.data},status=status.HTTP_200_OK)
         else:
-            return Response(serialized.errors,status=status.HTTP_400_BAD_REQUEST)
+            return Response({"errors":serialized.errors},status=status.HTTP_400_BAD_REQUEST)
         
     # To Unassign a Project 
     def delete(self, request):
@@ -219,3 +219,18 @@ class UserDeleteView(APIView):
             return Response({'message': 'User deleted successfully.'}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response({'errors': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+class ProjectUnAssignView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = [IsAuthenticated]
+    def post(self,request):
+        serialized = serializer.ProjectUnAssignSerializer(data=request.data)
+        if serialized.is_valid():
+            project = serialized.validated_data.get('project')
+            freelancer = serialized.validated_data.get('freelancer')
+            assigned_project = ProjectsAssigned.objects.filter(project=project,freelancer=freelancer)
+            assigned_project.delete()
+            project.project_assigned_status = False
+            project.save()
+            return Response({'msg':"Project unassigned success"},status=status.HTTP_200_OK)
+        return Response({"errors":serialized.errors},status=status.HTTP_400_BAD_REQUEST)
